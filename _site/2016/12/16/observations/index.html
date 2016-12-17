@@ -11,7 +11,7 @@
 
   <title>
     
-      Network Automation &middot; Brownfield (mostly)
+      Running ansible at scale &middot; Network Automation
     
   </title>
 
@@ -44,7 +44,7 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a class="sidebar-nav-item active" href="/">Home</a>
+      <a class="sidebar-nav-item" href="/">Home</a>
 
       
 
@@ -77,18 +77,10 @@
 
 
     <div class="content container">
-      <div class="posts">
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2016/12/16/observations/">
-        Running ansible at scale
-      </a>
-    </h1>
-
-    <span class="post-date">16 Dec 2016</span>
-
-    <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches. 
+      <div class="post">
+  <h1 class="post-title">Running ansible at scale</h1>
+  <span class="post-date">16 Dec 2016</span>
+  <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches. 
 Like most things though, the devil is in the details. Right off the bat, I ran into &quot;non-ansible&quot; related issues (tacacs/ssh).
 That brought the number of devices to about 270. Not a big number right? At the most basic level, yes, if I was simply pushing configs using the ios_config
 module.</p>
@@ -143,18 +135,15 @@ the same commands. I could not recreate the issue. I had good connectivity each 
 behavior. Which means, for any playbook that has dynamic includes, we need to remember to send any variables that role will need, even though your tags may not be calling
 that role.</p>
 
-  </div>
-  
 </div>
 
-<div class="pagination">
-  
-    <span class="pagination-item older">Older</span>
-  
-  
-    <span class="pagination-item newer">Newer</span>
-  
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+  </ul>
 </div>
+
     </div>
 
   </body>

@@ -6,10 +6,10 @@ highlighter:      pygments
 permalink:        pretty
 
 # Setup
-title:            TEST
-tagline:          'A Jekyll themed blog'
-description:      'A log of my observations in the network automation domain. <a href="https://twitter.com/termlen0" target="_blank">@termlen0</a>.'
-url:              http://hyde.getpoole.com
+title:            Network Automation
+tagline:          'Brownfield (mostly)'
+description:      'Observations in network automation<br /> <a href="https://twitter.com/termlen0" target="_blank">@termlen0</a>'
+url:              http://termlen0.github.io
 baseurl:          /
 
 author:
@@ -25,7 +25,7 @@ gems:
 
 
 # Custom vars
-version:          2.1.0
+#version:          2.1.0
 
 github:
   repo:           https://github.com/termlen0

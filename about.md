@@ -4,27 +4,22 @@ title: About
 ---
 
 <p class="message">
-  Hey there! This page is included as an example. Feel free to customize it for your own use upon downloading. Carry on!
+  Hey there! I am a Senior Network Architect at GE 
 </p>
 
-In the novel, *The Strange Case of Dr. Jeykll and Mr. Hyde*, Mr. Poole is Dr. Jekyll's virtuous and loyal butler. Similarly, Poole is an upstanding and effective butler that helps you build Jekyll themes. It's made by [@mdo](https://twitter.com/mdo).
+I have been doing network administration/engineering/design/architecture for a few years now (started right after college in 2000). For the last couple of years, I have been focused on trying to "smarten" how we do networks. 
 
-There are currently two themes built on Poole:
+###Some other things about me
+- Not a fan of acronym FUD induced by: "SDN", "SDWAN", "NFV", "VNF" etc (How on earth is WAN not the network!)
+- I ride motorcycles, am a huge fan of science fiction and like listening to Vinyl
 
-* [Hyde](http://hyde.getpoole.com)
-* [Lanyon](http://lanyon.getpoole.com)
+###Some ways to get a hold of me
+* [Twitter](https://twitter.com/termlen0)
+* [Linkedin](https://linkedin.com/in/achenampara)
 
-Learn more and contribute on [GitHub](https://github.com/poole).
+###My repo
+ [GitHub](https://github.com/termlen0).
 
-## Setup
 
-Some fun facts about the setup of this project include:
-
-* Built for [Jekyll](http://jekyllrb.com)
-* Developed on GitHub and hosted for free on [GitHub Pages](https://pages.github.com)
-* Coded with [Sublime Text 2](http://sublimetext.com), an amazing code editor
-* Designed and developed while listening to music like [Blood Bros Trilogy](https://soundcloud.com/maddecent/sets/blood-bros-series)
-
-Have questions or suggestions? Feel free to [open an issue on GitHub](https://github.com/poole/issues/new) or [ask me on Twitter](https://twitter.com/mdo).
 
 Thanks for reading!
