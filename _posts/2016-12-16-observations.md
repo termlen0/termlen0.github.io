@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Running ansible at scale
+comments: true
 ---
 Last week I deployed my first "at scale" playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches. 
 Like most things though, the devil is in the details. Right off the bat, I ran into "non-ansible" related issues (tacacs/ssh).
