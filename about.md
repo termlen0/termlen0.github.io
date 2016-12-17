@@ -2,9 +2,9 @@
 layout: page
 title: About
 ---
-
+<img src="../ajay_profile_mono.jpg" style="width:135px;height:160px;" >
 <p class="message">
-  Hey there! I am a Senior Network Architect at GE 
+  Hey there! I'm Ajay Chenampara and I am a Senior Network Architect at GE 
 </p>
 
 I have been doing network administration/engineering/design/architecture for a few years now (started right after college in 2000). For the last couple of years, I have been focused on trying to "smarten" how we do networks. 
