@@ -11,7 +11,7 @@
 
   <title>
     
-      Network Automation &middot; Brownfield (mostly)
+      The need for a stateful variable tracker and an implementation example &middot; Network Automation
     
   </title>
 
@@ -44,7 +44,7 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a class="sidebar-nav-item active" href="/">Home</a>
+      <a class="sidebar-nav-item" href="/">Home</a>
 
       
 
@@ -76,18 +76,10 @@
 
 
     <div class="content container">
-      <div class="posts">
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2016/12/28/observations/">
-        The need for a stateful variable tracker and an implementation example
-      </a>
-    </h1>
-
-    <span class="post-date">28 Dec 2016</span>
-
-    <p>When it comes to automation role models, network engineers have often looked up
+      <div class="post">
+  <h1 class="post-title">The need for a stateful variable tracker and an implementation example</h1>
+  <span class="post-date">28 Dec 2016</span>
+  <p>When it comes to automation role models, network engineers have often looked up
 to our compute brethren. For decades, compute admins have had tools that allowed
 them to execute scripts on systems at particular times: typically backups,
 rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
@@ -183,85 +175,47 @@ the <a href="https://github.com/termlen0/nsot-tester">iterable test playbook</a>
 to get an idea of how to use the stateful backend for your automation
 playbooks.</p>
 
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2016/12/16/observations/">
-        Running ansible at scale
-      </a>
-    </h1>
-
-    <span class="post-date">16 Dec 2016</span>
-
-    <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches. 
-Like most things though, the devil is in the details. Right off the bat, I ran into &quot;non-ansible&quot; related issues (tacacs/ssh).
-That brought the number of devices to about 270. Not a big number right? At the most basic level, yes, if I was simply pushing configs using the ios_config
-module.</p>
-
-<h2>Breakdown of the playbook</h2>
-
-<ol>
-<li>Execute a show run on the device and compile a local backup for each device</li>
-<li>Run a pre-flight report, specific to the interfaces we are going to impact (multiple ssh sessions per host)</li>
-<li>Build the configs locally</li>
-<li>Deploy the configs</li>
-<li>Validate the configs/Unit testing</li>
-</ol>
-
-<h3>A bit more about the unit testing:</h3>
-
-<p>For testing the changes were deployed, I had 2 criteria:</p>
-
-<ol>
-<li>Assert that the new helpers are present within the interface configurations (of the specific interfaces)</li>
-<li>Assert that the startup and running config are in sync (in other word, the new config has been saved)</li>
-</ol>
-
-<p>For assertion 1, I took the approach of running a show running interface per interface - this implied multiple ssh sessions per host.</p>
-
-<h2>Observations:</h2>
-
-<ol>
-<li>Running the playbook for backups result in a lot of SSH connection failures on the first run. Subsequent runs are significantly more successful - Still see some failures</li>
-<li>Running the playbook for the preflight report/validation, results in ssh timeouts - these are not consistent across hosts: Meaning, for the same host, the show run int
-for Vlan101 will work but might fail for Vlan201 on the first run, but on the next run, there is no guarantee that a repeat play will reproduce this exact failure </li>
-<li>My validation role uses dynamic includes like this <a href="https://github.com/termlen0/ansible_dynamic_include_bug_demo">example</a>. Running the playbook with a tag other
-than &quot;validate&quot;, still attempts to load all yaml files and results in failure.</li>
-</ol>
-
-<h2>Tweaks and next steps:</h2>
-
-<ol>
-<li>I had mixed success with using the &quot;serial&quot; <a href="http://docs.ansible.com/ansible/playbooks_delegation.html#rolling-update-batch-size">option</a>. Needs more trial and error. </li>
-<li>Rewrite pre-flight and validation scripts to only do a single show run. Collect specific interface details from a local copy</li>
-<li>Tried pipelining and some other recommendations that seemed relevant based on <a href="https://www.ansible.com/blog/ansible-performance-tuning">this</a>. 
-However, it appears to be focussed on using ssh connections to the remote systems. As we know, for the ios_* modules, ansible ssh&#39;es to the local host and then uses paramiko
-within the modules. In short, pipeline did not seem to do much </li>
-<li>Setting the timeout parameter for the ios_* modules seemed to have no affect on the ssh timeouts. </li>
-<li>To further understand observation 1 (which is still the most vexing one), I tried connecting to the device using paramiko from the python interpreter and executing 
-the same commands. I could not recreate the issue. I had good connectivity each time</li>
-</ol>
-
-<h2>Other issues:</h2>
-
-<p>For observation 3, I opened an <a href="https://github.com/ansible/ansible/issues/19345">issue</a> with ansible. Based on the comments it was closed with, I guess, it is an expected
-behavior. Which means, for any playbook that has dynamic includes, we need to remember to send any variables that role will need, even though your tags may not be calling
-that role.</p>
-
-  </div>
-  
 </div>
 
-<div class="pagination">
-  
-    <span class="pagination-item older">Older</span>
-  
-  
-    <span class="pagination-item newer">Newer</span>
-  
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2016/12/16/observations/">
+            Running ansible at scale
+            <small>16 Dec 2016</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
 </div>
-                                      
+
+      
+<!-- Add Disqus comments. -->
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//https-termlen0-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+                                
 
     </div>
 

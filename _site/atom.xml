@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2016-12-17T16:04:52-05:00</updated>
+ <updated>2016-12-29T17:11:38-06:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -13,9 +13,112 @@
 
  
  <entry>
+   <title>The need for a stateful variable tracker and an implementation example</title>
+   <link href="http://localhost:4000/2016/12/28/observations/"/>
+   <updated>2016-12-28T00:00:00-06:00</updated>
+   <id>http://localhost:4000/2016/12/28/observations</id>
+   <content type="html">&lt;p&gt;When it comes to automation role models, network engineers have often looked up
+to our compute brethren. For decades, compute admins have had tools that allowed
+them to execute scripts on systems at particular times: typically backups,
+rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
+Ansible, have empowered &amp;#39;Developer Administrators&amp;quot;, to stand up the entire app
+stack, automatically.
+In my network automation journey, I realized early on that a big gap/obstacle
+for network automation is going to be the need for a backend, source of truth.
+Traditional networks are relatively static. We typically make incremental
+changes to a production network configuration. For instance, once a port-channel
+is created, say Po101, we typically have some internal standard as to how the
+next port-channel will be numbered (could be Po102, Po201 etc). For a given
+&amp;#39;service&amp;#39;, we have to track many similar variables. Vlan numbers, Vrf numbers,
+HSRP group numbers, subinterface numbers, AS numbers.... The list goes on.
+Now, in quick contrast, the compute folks have almost never had this problem.
+Most automation in that space is:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Stand up the VM&lt;/li&gt;
+&lt;li&gt;Install necessary middleware&lt;/li&gt;
+&lt;li&gt;Clone the app repo&lt;/li&gt;
+&lt;li&gt;Fire up the app&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2&gt;What about IP addresses:&lt;/h2&gt;
+
+&lt;p&gt;Obviously, I am oversimplifying a bit, but the point remains that, there really
+isn&amp;#39;t much state tracking. Back in the day (actually, less than 10 yrs ago), I
+remember when compute/application admins were very fond of static IP addresses.
+That used to be &amp;#39;stateful&amp;#39; variable that needed to be tracked. Not any more.
+Unfortunately, on the network side, we are very dependent (depending on the use
+case) on IP addressing for our devices. Needless to say a solid IPAM
+is an extremely important stateful variable tracker for network
+automation. The reason for this blog is, however, to address the
+&amp;quot;other&amp;quot; variables (vlan numbers, vif numbers et al), we need for
+network automation, that doesn&amp;#39;t really come built in.&lt;/p&gt;
+
+&lt;h2&gt;An implementation example using NSoT:&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/dropbox/nsot&quot;&gt;Nsot&lt;/a&gt; is an opensource
+IPAM(primarily) from the folks at dropbox. Last year at the NetDevOps
+workshop at Interop,  &lt;a href=&quot;https://twitter.com/jathanism&quot;&gt;Jathan&lt;/a&gt; demo&amp;#39;ed
+the solution. It had 2 things that got my attention:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;It was written with an API first approach&lt;/li&gt;
+&lt;li&gt;It was written in python (a language that I am least uncomfortable
+in)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;I forked the repo and implemented the &amp;quot;Iterables&amp;quot; API, with a lot of
+guidance and support from Jathan. We have since internally used my
+implementation of NSoT, to prove out a few automation scenarios.&lt;/p&gt;
+
+&lt;h2&gt;Iterables - A visualization:&lt;/h2&gt;
+
+&lt;p&gt;My implementation of the stateful variables, involves 2 tables. One
+table tracks the variable that needs to be iterated (vlans numbers,
+vif numbers etc, along with the increment value). The other table
+tracks all  allocated values for a given variable.
+My good friend &lt;a href=&quot;https://www.linkedin.com/in/bobbyoutlaw&quot;&gt;Bobby Outlaw&lt;/a&gt;
+helped visualize the idea as follows:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/iterables.png&quot;&gt;&lt;img src=&quot;/assets/iterables.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Using NSoT as a backend, the above drawing visualizes various network
+automation services, within a service provider. &lt;em&gt;Service A&lt;/em&gt; requires the
+network automation system to keep track of a cryptomap sequence
+number, tenant VRF number and a portchannel interface
+number. Alternatively &lt;em&gt;Service B&lt;/em&gt; requires the automation system to
+track the cryptomap sequence number and the tenant vrf number.
+Each time we invoke the &amp;quot;playbook&amp;quot; for service A, we can now make API
+calls to our NSoT backend, that will give us the next available unused
+integer for the given variable.
+This particular implementation, also gives you an unique &lt;em&gt;&amp;quot;Service
+Key&amp;quot;&lt;/em&gt; each time you invoke the playbook. The idea behind it is; as a
+service provider, you hand over the unique key to your customer as a
+reference to the service request. If the customer wants the service
+revoked or modified (pretty much any CRUD operation)  at a later date,
+the service key can be used to identify all the values associated with
+a particular service, and thus modified.&lt;/p&gt;
+
+&lt;h2&gt;Demo Playbook:&lt;/h2&gt;
+
+&lt;p&gt;If you&amp;#39;d like to play around with the implementation, you can download
+a copy &lt;a href=&quot;https://github.com/termlen0/nsot&quot;&gt;here&lt;/a&gt;. Please keep in mind
+that you will have to follow
+the
+&lt;a href=&quot;https://nsot.readthedocs.io/en/latest/development.html&quot;&gt;developer guide&lt;/a&gt;
+to compile from source. (Hopefully once the PR is approved, it should
+be available for general consumption). Once you have NSoT running, you
+should be able to grab
+the &lt;a href=&quot;https://github.com/termlen0/nsot-tester&quot;&gt;iterable test playbook&lt;/a&gt;
+to get an idea of how to use the stateful backend for your automation
+playbooks.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
    <title>Running ansible at scale</title>
    <link href="http://localhost:4000/2016/12/16/observations/"/>
-   <updated>2016-12-16T00:00:00-05:00</updated>
+   <updated>2016-12-16T00:00:00-06:00</updated>
    <id>http://localhost:4000/2016/12/16/observations</id>
    <content type="html">&lt;p&gt;Last week I deployed my first &amp;quot;at scale&amp;quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches. 
 Like most things though, the devil is in the details. Right off the bat, I ran into &amp;quot;non-ansible&amp;quot; related issues (tacacs/ssh).
