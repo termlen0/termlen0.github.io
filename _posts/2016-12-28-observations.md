@@ -11,8 +11,9 @@ Ansible, have empowered 'Developer Administrators", to stand up the entire app
 stack, automatically.
 In my network automation journey, I realized early on that a big gap/obstacle
 for network automation is going to be the need for a backend, source of truth.
-Traditional networks are relatively static. We typically make incremental
-changes to a production network configuration. For instance, once a port-channel
+Traditional networks are relatively static(from a configuration
+standpoint). We typically make incremental changes to a production
+network configuration. For instance, once a port-channel
 is created, say Po101, we typically have some internal standard as to how the
 next port-channel will be numbered (could be Po102, Po201 etc). For a given
 'service', we have to track many similar variables. Vlan numbers, Vrf numbers,
