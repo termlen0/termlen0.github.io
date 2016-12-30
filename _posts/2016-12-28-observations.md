@@ -7,7 +7,7 @@ When it comes to automation role models, network engineers have often looked up
 to our compute brethren. For decades, compute admins have had tools that allowed
 them to execute scripts on systems at particular times\: typically backups,
 rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
-Ansible, have empowered 'Developer Administrators", to stand up the entire app
+Ansible, have empowered 'Developer Administrators', to stand up the entire app
 stack, automatically.
 In my network automation journey, I realized early on that a big gap/obstacle
 for network automation is going to be the need for a backend, source of truth.
@@ -42,7 +42,7 @@ network automation, that doesn't really come built in.
 [Nsot](https://github.com/dropbox/nsot) is an opensource
 IPAM(primarily) from the folks at dropbox. Last year at the NetDevOps
 workshop at Interop,  [Jathan](https://twitter.com/jathanism) demo'ed
-the solution. It had 2 things that got my attention\:
+the solution. It had 2 things that caught my attention\:
 
 1. It was written with an API first approach
 2. It was written in python (a language that I am least uncomfortable
