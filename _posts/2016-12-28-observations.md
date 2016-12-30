@@ -12,11 +12,11 @@ stack, automatically.
 In my network automation journey, I realized early on that a big gap/obstacle
 for network automation is going to be the need for a backend, source of truth.
 Traditional networks are relatively static(from a configuration
-standpoint). We typically make incremental changes to a production
+standpoint). We typically make incremental changes to variables in a production
 network configuration. For instance, once a port-channel
 is created, say Po101, we typically have some internal standard as to how the
 next port-channel will be numbered (could be Po102, Po201 etc). For a given
-'service', we have to track many similar variables. Vlan numbers, Vrf numbers,
+'network service', we have to track many similar variables: Vlan numbers, Vrf numbers,
 HSRP group numbers, subinterface numbers, AS numbers.... The list goes on.
 Now, in quick contrast, the compute folks have almost never had this problem.
 Most automation in that space is\:
@@ -25,18 +25,21 @@ Most automation in that space is\:
 2. Install necessary middleware
 3. Clone the app repo
 4. Fire up the app
+5. Ensure compliance
 
 ## What about IP addresses:
 Obviously, I am oversimplifying a bit, but the point remains that, there really
-isn't much state tracking. Back in the day (actually, less than 10 yrs ago), I
-remember when compute/application admins were very fond of static IP addresses.
-That used to be 'stateful' variable that needed to be tracked. Not any more.
+isn't much state tracking, when it comes to application/OS admin automation.
+Back in the day (actually, less than 10 yrs ago), I remember when
+compute/application admins were very fond of static IP addresses.
+That used to be 'stateful' variable they needed tracked. Not any more.
 Unfortunately, on the network side, we are very dependent (depending on the use
-case) on IP addressing for our devices. Needless to say a solid IPAM
+case) on static IP addressing for our devices. Needless to say a solid IPAM
 is an extremely important stateful variable tracker for network
-automation. The reason for this blog is, however, to address the
+automation. The reason for this blog post is, however, to address the
 "other" variables (vlan numbers, vif numbers et al), we need for
-network automation, that doesn't really come built in.
+network automation, that doesn't really come built into standard,
+'network focused' software, like IPAMs/CMDB
 
 ## An implementation example using NSoT:
 [Nsot](https://github.com/dropbox/nsot) is an opensource
@@ -46,17 +49,17 @@ the solution. It had 2 things that caught my attention\:
 
 1. It was written with an API first approach
 2. It was written in python (a language that I am least uncomfortable
-   in)
+   in :) )
 
 I forked the repo and implemented the "Iterables" API, with a lot of
-guidance and support from Jathan. We have since internally used my
-implementation of NSoT, to prove out a few automation scenarios.
+guidance and support from Jathan. We have since, internally, used my
+implementation of NSoT, to prove out quite a few automation scenarios.
 
 ## Iterables - A visualization:
 My implementation of the stateful variables, involves 2 tables. One
 table tracks the variable that needs to be iterated (vlans numbers,
 vif numbers etc, along with the increment value). The other table
-tracks all  allocated values for a given variable.
+tracks all allocated values for a given variable.
 My good friend [Bobby Outlaw](https://www.linkedin.com/in/bobbyoutlaw)
 helped visualize the idea as follows:
 
@@ -88,7 +91,7 @@ that you will have to follow
 the
 [developer guide](https://nsot.readthedocs.io/en/latest/development.html)
 to compile from source. (Hopefully once the PR is approved, it should
-be available for general consumption). Once you have NSoT running, you
+be available for general consumption, directly from pip). Once you have NSoT running, you
 should be able to grab
 the [iterable test playbook](https://github.com/termlen0/nsot-tester)
 to get an idea of how to use the stateful backend for your automation

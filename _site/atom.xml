@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2016-12-29T18:40:07-06:00</updated>
+ <updated>2016-12-29T18:55:52-06:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -26,11 +26,11 @@ stack, automatically.
 In my network automation journey, I realized early on that a big gap/obstacle
 for network automation is going to be the need for a backend, source of truth.
 Traditional networks are relatively static(from a configuration
-standpoint). We typically make incremental changes to a production
+standpoint). We typically make incremental changes to variables in a production
 network configuration. For instance, once a port-channel
 is created, say Po101, we typically have some internal standard as to how the
 next port-channel will be numbered (could be Po102, Po201 etc). For a given
-&amp;#39;service&amp;#39;, we have to track many similar variables. Vlan numbers, Vrf numbers,
+&amp;#39;network service&amp;#39;, we have to track many similar variables: Vlan numbers, Vrf numbers,
 HSRP group numbers, subinterface numbers, AS numbers.... The list goes on.
 Now, in quick contrast, the compute folks have almost never had this problem.
 Most automation in that space is:&lt;/p&gt;
@@ -40,20 +40,23 @@ Most automation in that space is:&lt;/p&gt;
 &lt;li&gt;Install necessary middleware&lt;/li&gt;
 &lt;li&gt;Clone the app repo&lt;/li&gt;
 &lt;li&gt;Fire up the app&lt;/li&gt;
+&lt;li&gt;Ensure compliance&lt;/li&gt;
 &lt;/ol&gt;
 
 &lt;h2&gt;What about IP addresses:&lt;/h2&gt;
 
 &lt;p&gt;Obviously, I am oversimplifying a bit, but the point remains that, there really
-isn&amp;#39;t much state tracking. Back in the day (actually, less than 10 yrs ago), I
-remember when compute/application admins were very fond of static IP addresses.
-That used to be &amp;#39;stateful&amp;#39; variable that needed to be tracked. Not any more.
+isn&amp;#39;t much state tracking, when it comes to application/OS admin automation.
+Back in the day (actually, less than 10 yrs ago), I remember when
+compute/application admins were very fond of static IP addresses.
+That used to be &amp;#39;stateful&amp;#39; variable they needed tracked. Not any more.
 Unfortunately, on the network side, we are very dependent (depending on the use
-case) on IP addressing for our devices. Needless to say a solid IPAM
+case) on static IP addressing for our devices. Needless to say a solid IPAM
 is an extremely important stateful variable tracker for network
-automation. The reason for this blog is, however, to address the
+automation. The reason for this blog post is, however, to address the
 &amp;quot;other&amp;quot; variables (vlan numbers, vif numbers et al), we need for
-network automation, that doesn&amp;#39;t really come built in.&lt;/p&gt;
+network automation, that doesn&amp;#39;t really come built into standard,
+&amp;#39;network focused&amp;#39; software, like IPAMs/CMDB&lt;/p&gt;
 
 &lt;h2&gt;An implementation example using NSoT:&lt;/h2&gt;
 
@@ -65,19 +68,19 @@ the solution. It had 2 things that caught my attention:&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;It was written with an API first approach&lt;/li&gt;
 &lt;li&gt;It was written in python (a language that I am least uncomfortable
-in)&lt;/li&gt;
+in :) )&lt;/li&gt;
 &lt;/ol&gt;
 
 &lt;p&gt;I forked the repo and implemented the &amp;quot;Iterables&amp;quot; API, with a lot of
-guidance and support from Jathan. We have since internally used my
-implementation of NSoT, to prove out a few automation scenarios.&lt;/p&gt;
+guidance and support from Jathan. We have since, internally, used my
+implementation of NSoT, to prove out quite a few automation scenarios.&lt;/p&gt;
 
 &lt;h2&gt;Iterables - A visualization:&lt;/h2&gt;
 
 &lt;p&gt;My implementation of the stateful variables, involves 2 tables. One
 table tracks the variable that needs to be iterated (vlans numbers,
 vif numbers etc, along with the increment value). The other table
-tracks all  allocated values for a given variable.
+tracks all allocated values for a given variable.
 My good friend &lt;a href=&quot;https://www.linkedin.com/in/bobbyoutlaw&quot;&gt;Bobby Outlaw&lt;/a&gt;
 helped visualize the idea as follows:&lt;/p&gt;
 
@@ -108,7 +111,7 @@ that you will have to follow
 the
 &lt;a href=&quot;https://nsot.readthedocs.io/en/latest/development.html&quot;&gt;developer guide&lt;/a&gt;
 to compile from source. (Hopefully once the PR is approved, it should
-be available for general consumption). Once you have NSoT running, you
+be available for general consumption, directly from pip). Once you have NSoT running, you
 should be able to grab
 the &lt;a href=&quot;https://github.com/termlen0/nsot-tester&quot;&gt;iterable test playbook&lt;/a&gt;
 to get an idea of how to use the stateful backend for your automation
