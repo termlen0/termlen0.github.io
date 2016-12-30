@@ -87,16 +87,20 @@
 
     <span class="post-date">28 Dec 2016</span>
 
-    <p>When it comes to automation role models, network engineers have often looked up
+    <p>When it comes to automation role models, network engineers have often looked up,
 to our compute brethren. For decades, compute admins have had tools that allowed
 them to execute scripts on systems at particular times: typically backups,
 rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
 Ansible, have empowered &#39;Developer Administrators&#39;, to stand up the entire app
-stack, automatically.
-In my network automation journey, I realized early on that a big gap/obstacle
-for network automation is going to be the need for a backend, source of truth.
-Traditional networks are relatively static(from a configuration
-standpoint). We typically make incremental changes to variables in a production
+stack, automatically.</p>
+
+<p>In my network automation journey, I realized early on that, a big gap/obstacle
+for network automation is the need for a backend, to track positive
+integers; a source of truth, that knows what numeric value was last
+assigned to a particular network <em>service</em>(viz. firewall contexts,
+vlans etc  for a 3 tier app in the DMZ. Traditional networks are
+relatively static(from a configuration
+standpoint). We typically make incremental changes to <em>variables</em> in a production
 network configuration. For instance, once a port-channel
 is created, say Po101, we typically have some internal standard as to how the
 next port-channel will be numbered (could be Po102, Po201 etc). For a given
@@ -120,7 +124,7 @@ isn&#39;t much state tracking, when it comes to application/OS admin automation.
 Back in the day (actually, less than 10 yrs ago), I remember when
 compute/application admins were very fond of static IP addresses.
 That used to be &#39;stateful&#39; variable they needed tracked. Not any more.
-Unfortunately, on the network side, we are very dependent (depending on the use
+Unfortunately, on the network side, we are still very dependent (depending on the use
 case) on static IP addressing for our devices. Needless to say a solid IPAM
 is an extremely important stateful variable tracker for network
 automation. The reason for this blog post is, however, to address the
@@ -130,10 +134,10 @@ network automation, that doesn&#39;t really come built into standard,
 
 <h2>An implementation example using NSoT:</h2>
 
-<p><a href="https://github.com/dropbox/nsot">Nsot</a> is an opensource
+<p><a href="https://github.com/dropbox/nsot">NSoT</a> is an opensource
 IPAM(primarily) from the folks at dropbox. Last year at the NetDevOps
 workshop at Interop,  <a href="https://twitter.com/jathanism">Jathan</a> demo&#39;ed
-the solution. It had 2 things that caught my attention:</p>
+the product. It had 2 things that caught my attention:</p>
 
 <ol>
 <li>It was written with an API first approach</li>

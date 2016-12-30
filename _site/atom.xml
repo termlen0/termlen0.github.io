@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2016-12-29T18:55:52-06:00</updated>
+ <updated>2016-12-30T05:52:09-06:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -17,16 +17,20 @@
    <link href="http://localhost:4000/2016/12/28/observations/"/>
    <updated>2016-12-28T00:00:00-06:00</updated>
    <id>http://localhost:4000/2016/12/28/observations</id>
-   <content type="html">&lt;p&gt;When it comes to automation role models, network engineers have often looked up
+   <content type="html">&lt;p&gt;When it comes to automation role models, network engineers have often looked up,
 to our compute brethren. For decades, compute admins have had tools that allowed
 them to execute scripts on systems at particular times: typically backups,
 rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
 Ansible, have empowered &amp;#39;Developer Administrators&amp;#39;, to stand up the entire app
-stack, automatically.
-In my network automation journey, I realized early on that a big gap/obstacle
-for network automation is going to be the need for a backend, source of truth.
-Traditional networks are relatively static(from a configuration
-standpoint). We typically make incremental changes to variables in a production
+stack, automatically.&lt;/p&gt;
+
+&lt;p&gt;In my network automation journey, I realized early on that, a big gap/obstacle
+for network automation is the need for a backend, to track positive
+integers; a source of truth, that knows what numeric value was last
+assigned to a particular network &lt;em&gt;service&lt;/em&gt;(viz. firewall contexts,
+vlans etc  for a 3 tier app in the DMZ. Traditional networks are
+relatively static(from a configuration
+standpoint). We typically make incremental changes to &lt;em&gt;variables&lt;/em&gt; in a production
 network configuration. For instance, once a port-channel
 is created, say Po101, we typically have some internal standard as to how the
 next port-channel will be numbered (could be Po102, Po201 etc). For a given
@@ -50,7 +54,7 @@ isn&amp;#39;t much state tracking, when it comes to application/OS admin automat
 Back in the day (actually, less than 10 yrs ago), I remember when
 compute/application admins were very fond of static IP addresses.
 That used to be &amp;#39;stateful&amp;#39; variable they needed tracked. Not any more.
-Unfortunately, on the network side, we are very dependent (depending on the use
+Unfortunately, on the network side, we are still very dependent (depending on the use
 case) on static IP addressing for our devices. Needless to say a solid IPAM
 is an extremely important stateful variable tracker for network
 automation. The reason for this blog post is, however, to address the
@@ -60,10 +64,10 @@ network automation, that doesn&amp;#39;t really come built into standard,
 
 &lt;h2&gt;An implementation example using NSoT:&lt;/h2&gt;
 
-&lt;p&gt;&lt;a href=&quot;https://github.com/dropbox/nsot&quot;&gt;Nsot&lt;/a&gt; is an opensource
+&lt;p&gt;&lt;a href=&quot;https://github.com/dropbox/nsot&quot;&gt;NSoT&lt;/a&gt; is an opensource
 IPAM(primarily) from the folks at dropbox. Last year at the NetDevOps
 workshop at Interop,  &lt;a href=&quot;https://twitter.com/jathanism&quot;&gt;Jathan&lt;/a&gt; demo&amp;#39;ed
-the solution. It had 2 things that caught my attention:&lt;/p&gt;
+the product. It had 2 things that caught my attention:&lt;/p&gt;
 
 &lt;ol&gt;
 &lt;li&gt;It was written with an API first approach&lt;/li&gt;
