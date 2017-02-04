@@ -29,7 +29,14 @@
   <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
 </head>
 
+  <h3 class="masthead-title">
+    <a href="/" title="Home">Network Automation</a>
 
+    
+    &nbsp;&nbsp;&nbsp;
+    <small><a href="/archive">Archive</a></small>
+    
+  </h3>
   <body class="theme-base-07">
 
     <div class="sidebar">
@@ -61,6 +68,12 @@
         
       
         
+          
+            <a class="sidebar-nav-item" href="/acrhive/">Archive</a>
+          
+        
+      
+        
       
         
           
@@ -70,7 +83,7 @@
       <a class="sidebar-nav-item" href="https://github.com/termlen0">GitHub project</a>
     </nav>
 
-    <p>&copy; 2016. All rights reserved.</p>
+    <p>&copy; 2017. All rights reserved.</p>
   </div>
 </div>
 
@@ -79,7 +92,7 @@
       <div class="post">
   <h1 class="post-title">Running ansible at scale</h1>
   <span class="post-date">16 Dec 2016</span>
-  <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches. 
+  <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
 Like most things though, the devil is in the details. Right off the bat, I ran into &quot;non-ansible&quot; related issues (tacacs/ssh).
 That brought the number of devices to about 270. Not a big number right? At the most basic level, yes, if I was simply pushing configs using the ios_config
 module.</p>
@@ -110,7 +123,7 @@ module.</p>
 <ol>
 <li>Running the playbook for backups result in a lot of SSH connection failures on the first run. Subsequent runs are significantly more successful - Still see some failures</li>
 <li>Running the playbook for the preflight report/validation, results in ssh timeouts - these are not consistent across hosts: Meaning, for the same host, the show run int
-for Vlan101 will work but might fail for Vlan201 on the first run, but on the next run, there is no guarantee that a repeat play will reproduce this exact failure </li>
+for Vlan101 will work but might fail for Vlan201 on the first run, but on the next run, there is no guarantee that a repeat play will reproduce this exact failure</li>
 <li>My validation role uses dynamic includes like this <a href="https://github.com/termlen0/ansible_dynamic_include_bug_demo">example</a>. Running the playbook with a tag other
 than &quot;validate&quot;, still attempts to load all yaml files and results in failure.</li>
 </ol>
@@ -118,13 +131,13 @@ than &quot;validate&quot;, still attempts to load all yaml files and results in 
 <h2>Tweaks and next steps:</h2>
 
 <ol>
-<li>I had mixed success with using the &quot;serial&quot; <a href="http://docs.ansible.com/ansible/playbooks_delegation.html#rolling-update-batch-size">option</a>. Needs more trial and error. </li>
+<li>I had mixed success with using the &quot;serial&quot; <a href="http://docs.ansible.com/ansible/playbooks_delegation.html#rolling-update-batch-size">option</a>. Needs more trial and error.</li>
 <li>Rewrite pre-flight and validation scripts to only do a single show run. Collect specific interface details from a local copy</li>
-<li>Tried pipelining and some other recommendations that seemed relevant based on <a href="https://www.ansible.com/blog/ansible-performance-tuning">this</a>. 
+<li>Tried pipelining and some other recommendations that seemed relevant based on <a href="https://www.ansible.com/blog/ansible-performance-tuning">this</a>.
 However, it appears to be focussed on using ssh connections to the remote systems. As we know, for the ios_* modules, ansible ssh&#39;es to the local host and then uses paramiko
-within the modules. In short, pipeline did not seem to do much </li>
-<li>Setting the timeout parameter for the ios_* modules seemed to have no affect on the ssh timeouts. </li>
-<li>To further understand observation 1 (which is still the most vexing one), I tried connecting to the device using paramiko from the python interpreter and executing 
+within the modules. In short, pipeline did not seem to do much</li>
+<li>Setting the timeout parameter for the ios_* modules seemed to have no affect on the ssh timeouts.</li>
+<li>To further understand observation 1 (which is still the most vexing one), I tried connecting to the device using paramiko from the python interpreter and executing
 the same commands. I could not recreate the issue. I had good connectivity each time</li>
 </ol>
 
@@ -139,6 +152,15 @@ that role.</p>
 <div class="related">
   <h2>Related Posts</h2>
   <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2017/02/03/observations/">
+            Of state, idempotency, and CI/CD in the brownfield network
+            <small>03 Feb 2017</small>
+          </a>
+        </h3>
+      </li>
     
       <li>
         <h3>

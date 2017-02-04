@@ -17,12 +17,15 @@ author:
   url:            https://twitter.com/termlen0
 
 paginate:         5
-gems: 
+gems:
   - jekyll-paginate
   - redcarpet
   - jekyll-gist
   - pygments.rb
 
+#Archive
+pages_list:
+  Archive: '/archive'
 
 # Custom vars
 #version:          2.1.0
