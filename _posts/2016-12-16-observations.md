@@ -5,7 +5,8 @@ comments: true
 ---
 Last week I deployed my first "at scale" playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
 Like most things though, the devil is in the details. Right off the bat, I ran into "non-ansible" related issues (tacacs/ssh).
-That brought the number of devices to about 270. Not a big number right? At the most basic level, yes, if I was simply pushing configs using the ios\_config
+That brought the number of devices to about 270. Not a big number right?
+At the most basic level, yes, if I was simply pushing configs using the ios\_config
 module.
 ##Breakdown of the playbook
 1. Execute a show run on the device and compile a local backup for each device
@@ -13,6 +14,8 @@ module.
 3. Build the configs locally
 4. Deploy the configs
 5. Validate the configs/Unit testing
+
+<!--more-->
 
 ### A bit more about the unit testing:
 For testing the changes were deployed, I had 2 criteria:

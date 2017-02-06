@@ -18,6 +18,8 @@ form), we interact with the system as follows:
 The system then figures out how to achieve your end state. In other
 words..
 
+<!--more-->
+
 ```
     * EndState -> System
     * System determines current state and calculates diff to achieve end

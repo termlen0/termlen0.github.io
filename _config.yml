@@ -17,6 +17,9 @@ author:
   url:            https://twitter.com/termlen0
 
 paginate:         5
+
+excerpt_separator: "<!--more-->"
+
 gems:
   - jekyll-paginate
   - redcarpet

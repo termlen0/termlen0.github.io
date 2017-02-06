@@ -113,112 +113,8 @@ want your toast)
 </code></pre></div>
 <p>The system then figures out how to achieve your end state. In other
 words..</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>    * EndState -&gt; System
-    * System determines current state and calculates diff to achieve end
-    state
-    * System then does: Current State +/- diffs, to achieve end state
-</code></pre></div>
-<h2>Imperative and declarative systems</h2>
 
-<p>Lately I have been working a lot with ansible, with a specific focus
-on network devices that natively do not have good/any api: Cisco
-routers and switches, in particular. If you are familiar, you already
-know, that the core ansible modules are idempotent. Ansible does this,
-by getting the current state of the device before execution,
-validating whether the differences to be applied, are already present,
-and if not, applying them.  Going back to the earlier discussion on
-control systems, it is pretty obvious that the way we achieve the &quot;end
-state&quot; in ansible is quite different. Here, no desired/endstate is given
-to the system. The operator calculates the differences that need to be
-applied and gives it to the system. The system then assures that, the
-requested differences are currently not present in the devices and
-applies them.</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>    * Differences -&gt; System.
-    * System collects the current state
-    * System validates that differences do not exist in the current
-    state
-    * System adds the differences
-</code></pre></div>
-<p>I specifically say that the system <strong>adds</strong> the differences. What I am
-trying to point out, is the non-declarative nature here. For a real
-example, if I have to remove a bgp neigbor through ansible, I have to
-say</p>
-
-<p><code>no ip bgp neighbor x.x.x.x</code></p>
-
-<p>Rather than being able to define the end state, where I tell the
-system how I would like the device configuration to look like, I have
-to tell it specifically, what needs to happen. This is not a
-flaw/drawback. I am just pointing out the nature of closed systems.
-Contrast this with a system dealing with configuration files. You can
-define your end state, simply by writing the configuration file, the
-way you want it to be on the system. The automation tool&#39;s job is to
-identify the differences and then decide whether configs need to be
-applied or removed to the end host - <em>declarative</em></p>
-
-<h2>So what and are there declarative n/w automation options?</h2>
-
-<p>Declarative systems are IMO, elegant, and embody
-automation/abstraction better than imperative systems. However you
-have lesser control over the how (your toaster makes the call about
-the temperature to brown your bread).
-In the past, I have built a few automated services
-using
-<a href="http://www.cisco.com/c/en/us/solutions/service-provider/solutions-cloud-providers/network-services-orchestrator-solutions.html">tail-f systems</a>
-This product helps the operator build network services, in a
-quasi-declarative fashion. The way it achieves this, is that the tool,
-caches/persists the current state of devices locally. When the
-operator drives a change, the tool, validates the following:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>1. Does the current state on the devices match the cached configs
-2. If yes; calculate the difference, stage the config locally,
-   push to end device
-3. If no; the operator has the option to treat the cached config
-   as the source of truth *OR* the current device state as the
-   source of truth
-</code></pre></div>
-<p>This brings me to the concept of state. In a
-<a href="https://termlen0.github.io/2016/12/28/observations/">previous</a>
-post, I talked about stateful variable tracking for network
-equipment. However, how do we track configuration state?</p>
-
-<h2>CRUD and the database analogy</h2>
-
-<p>With tailf, having a cached copy of the &quot;state&quot; of the device, allows
-the operator to treat the end devices as rows in a database. So you
-have the ability to &quot;commit&quot; your changes and &quot;rollback&quot; when errors
-are encountered. However from an automation tool standpoint, I want to
-decouple the &quot;state&quot; from the tool.
-I believe such a declarative system can be
-achieved using a version control system + an imperative tool. For
-example:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>1. The state of a topology is saved in say, github.
-2. A change to the system is requested via a pull request. Note
-   that this is a declaration of the desired end state, which is
-   calculated by some imperative system, like the ansible cisco
-   core modules.
-3. The CI/CD tool chain evaluates the requested endstate validity,
-   allowing the operator the opportunity to effect corrections.
-4. The desired end state is achieved and subsequently stored at
-   the &quot;Source of Truth&quot; - github in this case.
-</code></pre></div>
-<p>I am not sure how exactly, to handle out of band changes. The
-possibility exists, for writing playbooks, that can potentially
-overwrite the device configs with the configs stored in github or
-update github, with the current device state.</p>
-
-<p>Another point of consideration, comparing network devices to
-databases, makes one think of how tightly coupled the &quot;data&quot; and the
-&quot;configuration&quot; is on network devices. I had not thought about a
-firewall rule in such terms, until this conversation with my
-colleague. The configuration of a database is very much decoupled from
-the data, whereas the configuration (permit traffic) and data
-(source/destination IP/PORTS) are extremely tightly coupled on network
-devices - food for thought!</p>
-
-<p>I would love to hear your thoughts on the state of network automation
-for closed systems like routers and switches. Also feedback on this
-thought exercise would be awesome.</p>
-
+    <a href="/2017/02/03/observations/"> Read more </a>
   </div>
   
   <div class="post">
@@ -239,101 +135,9 @@ stack, automatically.</p>
 
 <p>In my network automation journey, I realized early on that, a big gap/obstacle
 for network automation is the need for a backend, to track positive
-integers; a source of truth, that knows what numeric value was last
-assigned to a particular network <em>service</em>(viz. firewall contexts,
-vlans etc  for a 3 tier app in the DMZ. Traditional networks are
-relatively static(from a configuration
-standpoint). We typically make incremental changes to <em>variables</em> in a production
-network configuration. For instance, once a port-channel
-is created, say Po101, we typically have some internal standard as to how the
-next port-channel will be numbered (could be Po102, Po201 etc). For a given
-&#39;network service&#39;, we have to track many similar variables: Vlan numbers, Vrf numbers,
-HSRP group numbers, subinterface numbers, AS numbers.... The list goes on.
-Now, in quick contrast, the compute folks have almost never had this problem.
-Most automation in that space is:</p>
+integers; a source of truth, that knows what numeric value was last</p>
 
-<ol>
-<li>Stand up the VM</li>
-<li>Install necessary middleware</li>
-<li>Clone the app repo</li>
-<li>Fire up the app</li>
-<li>Ensure compliance</li>
-</ol>
-
-<h2>What about IP addresses:</h2>
-
-<p>Obviously, I am oversimplifying a bit, but the point remains that, there really
-isn&#39;t much state tracking, when it comes to application/OS admin automation.
-Back in the day (actually, less than 10 yrs ago), I remember when
-compute/application admins were very fond of static IP addresses.
-That used to be &#39;stateful&#39; variable they needed tracked. Not any more.
-Unfortunately, on the network side, we are still very dependent (depending on the use
-case) on static IP addressing for our devices. Needless to say a solid IPAM
-is an extremely important stateful variable tracker for network
-automation. The reason for this blog post is, however, to address the
-&quot;other&quot; variables (vlan numbers, vif numbers et al), we need for
-network automation, that doesn&#39;t really come built into standard,
-&#39;network focused&#39; software, like IPAMs/CMDB</p>
-
-<h2>An implementation example using NSoT:</h2>
-
-<p><a href="https://github.com/dropbox/nsot">NSoT</a> is an opensource
-IPAM(primarily) from the folks at dropbox. Last year at the NetDevOps
-workshop at Interop,  <a href="https://twitter.com/jathanism">Jathan</a> demo&#39;ed
-the product. It had 2 things that caught my attention:</p>
-
-<ol>
-<li>It was written with an API first approach</li>
-<li>It was written in python (a language that I am least uncomfortable
-in :) )</li>
-</ol>
-
-<p>I forked the repo and implemented the &quot;Iterables&quot; API, with a lot of
-guidance and support from Jathan. We have since, internally, used my
-implementation of NSoT, to prove out quite a few automation scenarios.</p>
-
-<h2>Iterables - A visualization:</h2>
-
-<p>My implementation of the stateful variables, involves 2 tables. One
-table tracks the variable that needs to be iterated (vlans numbers,
-vif numbers etc, along with the increment value). The other table
-tracks all allocated values for a given variable.
-My good friend <a href="https://www.linkedin.com/in/bobbyoutlaw">Bobby Outlaw</a>
-helped visualize the idea as follows:</p>
-
-<p><a href="/assets/iterables.png"><img src="/assets/iterables.png" alt=""></a></p>
-
-<p>Using NSoT as a backend, the above drawing visualizes various network
-automation services, within a service provider. <em>Service A</em> requires the
-network automation system to keep track of a cryptomap sequence
-number, tenant VRF number and a portchannel interface
-number. Alternatively <em>Service B</em> requires the automation system to
-track the cryptomap sequence number and the tenant vrf number.
-Each time we invoke the &quot;playbook&quot; for service A, we can now make API
-calls to our NSoT backend, that will give us the next available unused
-integer for the given variable.
-This particular implementation, also gives you an unique <em>&quot;Service
-Key&quot;</em> each time you invoke the playbook. The idea behind it is; as a
-service provider, you hand over the unique key to your customer as a
-reference to the service request. If the customer wants the service
-revoked or modified (pretty much any CRUD operation)  at a later date,
-the service key can be used to identify all the values associated with
-a particular service, and thus modified.</p>
-
-<h2>Demo Playbook:</h2>
-
-<p>If you&#39;d like to play around with the implementation, you can download
-a copy <a href="https://github.com/termlen0/nsot">here</a>. Please keep in mind
-that you will have to follow
-the
-<a href="https://nsot.readthedocs.io/en/latest/development.html">developer guide</a>
-to compile from source. (Hopefully once the PR is approved, it should
-be available for general consumption, directly from pip). Once you have NSoT running, you
-should be able to grab
-the <a href="https://github.com/termlen0/nsot-tester">iterable test playbook</a>
-to get an idea of how to use the stateful backend for your automation
-playbooks.</p>
-
+    <a href="/2016/12/28/observations/"> Read more </a>
   </div>
   
   <div class="post">
@@ -347,7 +151,8 @@ playbooks.</p>
 
     <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
 Like most things though, the devil is in the details. Right off the bat, I ran into &quot;non-ansible&quot; related issues (tacacs/ssh).
-That brought the number of devices to about 270. Not a big number right? At the most basic level, yes, if I was simply pushing configs using the ios_config
+That brought the number of devices to about 270. Not a big number right?
+At the most basic level, yes, if I was simply pushing configs using the ios_config
 module.</p>
 
 <h2>Breakdown of the playbook</h2>
@@ -360,46 +165,7 @@ module.</p>
 <li>Validate the configs/Unit testing</li>
 </ol>
 
-<h3>A bit more about the unit testing:</h3>
-
-<p>For testing the changes were deployed, I had 2 criteria:</p>
-
-<ol>
-<li>Assert that the new helpers are present within the interface configurations (of the specific interfaces)</li>
-<li>Assert that the startup and running config are in sync (in other word, the new config has been saved)</li>
-</ol>
-
-<p>For assertion 1, I took the approach of running a show running interface per interface - this implied multiple ssh sessions per host.</p>
-
-<h2>Observations:</h2>
-
-<ol>
-<li>Running the playbook for backups result in a lot of SSH connection failures on the first run. Subsequent runs are significantly more successful - Still see some failures</li>
-<li>Running the playbook for the preflight report/validation, results in ssh timeouts - these are not consistent across hosts: Meaning, for the same host, the show run int
-for Vlan101 will work but might fail for Vlan201 on the first run, but on the next run, there is no guarantee that a repeat play will reproduce this exact failure</li>
-<li>My validation role uses dynamic includes like this <a href="https://github.com/termlen0/ansible_dynamic_include_bug_demo">example</a>. Running the playbook with a tag other
-than &quot;validate&quot;, still attempts to load all yaml files and results in failure.</li>
-</ol>
-
-<h2>Tweaks and next steps:</h2>
-
-<ol>
-<li>I had mixed success with using the &quot;serial&quot; <a href="http://docs.ansible.com/ansible/playbooks_delegation.html#rolling-update-batch-size">option</a>. Needs more trial and error.</li>
-<li>Rewrite pre-flight and validation scripts to only do a single show run. Collect specific interface details from a local copy</li>
-<li>Tried pipelining and some other recommendations that seemed relevant based on <a href="https://www.ansible.com/blog/ansible-performance-tuning">this</a>.
-However, it appears to be focussed on using ssh connections to the remote systems. As we know, for the ios_* modules, ansible ssh&#39;es to the local host and then uses paramiko
-within the modules. In short, pipeline did not seem to do much</li>
-<li>Setting the timeout parameter for the ios_* modules seemed to have no affect on the ssh timeouts.</li>
-<li>To further understand observation 1 (which is still the most vexing one), I tried connecting to the device using paramiko from the python interpreter and executing
-the same commands. I could not recreate the issue. I had good connectivity each time</li>
-</ol>
-
-<h2>Other issues:</h2>
-
-<p>For observation 3, I opened an <a href="https://github.com/ansible/ansible/issues/19345">issue</a> with ansible. Based on the comments it was closed with, I guess, it is an expected
-behavior. Which means, for any playbook that has dynamic includes, we need to remember to send any variables that role will need, even though your tags may not be calling
-that role.</p>
-
+    <a href="/2016/12/16/observations/"> Read more </a>
   </div>
   
 </div>
@@ -412,6 +178,7 @@ that role.</p>
     <span class="pagination-item newer">Newer</span>
   
 </div>
+
                                       
 
     </div>

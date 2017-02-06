@@ -13,6 +13,9 @@ stack, automatically.
 In my network automation journey, I realized early on that, a big gap/obstacle
 for network automation is the need for a backend, to track positive
 integers; a source of truth, that knows what numeric value was last
+
+<!--more-->
+
 assigned to a particular network *service*(viz. firewall contexts,
 vlans etc  for a 3 tier app in the DMZ. Traditional networks are
 relatively static(from a configuration

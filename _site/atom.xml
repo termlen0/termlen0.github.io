@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2017-02-03T22:02:37-05:00</updated>
+ <updated>2017-02-06T11:37:07-05:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -30,6 +30,8 @@ want your toast)
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;p&gt;The system then figures out how to achieve your end state. In other
 words..&lt;/p&gt;
+
+&lt;!--more--&gt;
 &lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&lt;span&gt;&lt;/span&gt;    * EndState -&amp;gt; System
     * System determines current state and calculates diff to achieve end
     state
@@ -152,8 +154,11 @@ stack, automatically.&lt;/p&gt;
 
 &lt;p&gt;In my network automation journey, I realized early on that, a big gap/obstacle
 for network automation is the need for a backend, to track positive
-integers; a source of truth, that knows what numeric value was last
-assigned to a particular network &lt;em&gt;service&lt;/em&gt;(viz. firewall contexts,
+integers; a source of truth, that knows what numeric value was last&lt;/p&gt;
+
+&lt;!--more--&gt;
+
+&lt;p&gt;assigned to a particular network &lt;em&gt;service&lt;/em&gt;(viz. firewall contexts,
 vlans etc  for a 3 tier app in the DMZ. Traditional networks are
 relatively static(from a configuration
 standpoint). We typically make incremental changes to &lt;em&gt;variables&lt;/em&gt; in a production
@@ -256,7 +261,8 @@ playbooks.&lt;/p&gt;
    <id>http://localhost:4000/2016/12/16/observations</id>
    <content type="html">&lt;p&gt;Last week I deployed my first &amp;quot;at scale&amp;quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
 Like most things though, the devil is in the details. Right off the bat, I ran into &amp;quot;non-ansible&amp;quot; related issues (tacacs/ssh).
-That brought the number of devices to about 270. Not a big number right? At the most basic level, yes, if I was simply pushing configs using the ios_config
+That brought the number of devices to about 270. Not a big number right?
+At the most basic level, yes, if I was simply pushing configs using the ios_config
 module.&lt;/p&gt;
 
 &lt;h2&gt;Breakdown of the playbook&lt;/h2&gt;
@@ -268,6 +274,8 @@ module.&lt;/p&gt;
 &lt;li&gt;Deploy the configs&lt;/li&gt;
 &lt;li&gt;Validate the configs/Unit testing&lt;/li&gt;
 &lt;/ol&gt;
+
+&lt;!--more--&gt;
 
 &lt;h3&gt;A bit more about the unit testing:&lt;/h3&gt;
 

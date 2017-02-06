@@ -94,7 +94,8 @@
   <span class="post-date">16 Dec 2016</span>
   <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
 Like most things though, the devil is in the details. Right off the bat, I ran into &quot;non-ansible&quot; related issues (tacacs/ssh).
-That brought the number of devices to about 270. Not a big number right? At the most basic level, yes, if I was simply pushing configs using the ios_config
+That brought the number of devices to about 270. Not a big number right?
+At the most basic level, yes, if I was simply pushing configs using the ios_config
 module.</p>
 
 <h2>Breakdown of the playbook</h2>
@@ -106,6 +107,8 @@ module.</p>
 <li>Deploy the configs</li>
 <li>Validate the configs/Unit testing</li>
 </ol>
+
+<!--more-->
 
 <h3>A bit more about the unit testing:</h3>
 
