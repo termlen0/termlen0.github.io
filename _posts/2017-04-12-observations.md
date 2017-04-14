@@ -19,6 +19,8 @@ In it's most basic form, TDD works as follows:
 In this post, I hope to share my observations on how I used ansible to
 implement this using roles. I start with known facts/assumptions:
 
+<!--more-->
+
 *ASSUMPTION:* Given that the VLAN to be added is 101, it should be
 applied to devices ```nxos-spine1 & nxos-spine2``` and stp priority
 set as ```4096``` and ```8192``` respectively.
@@ -150,8 +152,8 @@ you to reuse this role in any playbook
 ```
 
 We are using a loop to include all the test files and we are replacing
-the standard ```{{ item }}``` var with ```{{ outer_item }}``` - Why?
+the standard `{{ item }}` var with `{{ outer_item }}` - Why?
 If the unit test files you are including through this loop themselves
-contain a loop, the value of ```{{ item }}``` main will be passed into
+contain a loop, the value of `{{ item }}` main will be passed into
 the unit test yaml. So we are explicitly setting the loop control
-variable in main to yaml to ```{{ outer_yaml }}```
+variable in main to yaml to `{{ outer_yaml }}`
