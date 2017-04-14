@@ -45,12 +45,12 @@ of roles._
 
 ``` diff
 TASK [validate : assert] *******************************************************
-- fatal: [nxos-spine1]: FAILED! => \{
+- fatal: [nxos-spine1]: FAILED! => {
 -    "assertion": "'101' in vlan_list ",
 -    "changed": false,
 -    "evaluated_to": false,
 -    "failed": true
-- \}
+- }
 
 ```
 
@@ -104,10 +104,10 @@ that all tests pass, in other words, the "GREEN" test.
 
 ``` diff
 TASK [validate : assert] *******************************************************
-+ ok: [nxos-spine1] => \{
++ ok: [nxos-spine1] => {
 +     "changed": false,
 +     "msg": "All assertions passed"
-+ \}
++ }
 ```
 
 
@@ -143,7 +143,7 @@ you to reuse this role in any playbook
 ``` yaml
 
 - name: Include all the test files
-  include: "\{\{ outer_item \}\}"
+  include: "{{ outer_item }}"
   with_fileglob:
     - "/vagrant/dhcp_helper/roles/validate/tasks/*test.yaml"
   loop_control:
