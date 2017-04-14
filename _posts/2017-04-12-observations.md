@@ -140,10 +140,10 @@ writing simple, units of test code and name them to match *test.yaml
 particular location, you now have a _reusable_ unit of code, allowing
 you to reuse this role in any playbook
 
-``` yaml
+```
 
 - name: Include all the test files
-  include: "\{\{ outer_item \}\}"
+  include: "{{ outer_item }}"
   with_fileglob:
     - "/vagrant/dhcp_helper/roles/validate/tasks/*test.yaml"
   loop_control:
