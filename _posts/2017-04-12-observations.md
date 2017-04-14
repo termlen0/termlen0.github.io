@@ -40,7 +40,7 @@ of roles._
 ``` yaml
 - assert:
     that:
-      - "\{\{ desired_vlan \}\} in vlan_list "
+      - {{ "{{ desired_vlan" }} }} vlan_list "
 ```
 
 ``` diff
