@@ -4,13 +4,233 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2017-02-06T12:09:25-05:00</updated>
+ <updated>2017-04-24T09:00:12-04:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>OT - A quick post on using gpg to manage github in Linux</title>
+   <link href="http://localhost:4000/2017/04/20/observations/"/>
+   <updated>2017-04-20T00:00:00-04:00</updated>
+   <id>http://localhost:4000/2017/04/20/observations</id>
+   <content type="html">&lt;p&gt;After being used to OSX Keychains in my old mac, I wanted a similar
+functionality on my Linux laptop. Being prompted each time to login,
+while interacting with &lt;a href=&quot;https://github.com&quot;&gt;github&lt;/a&gt;, for instance was
+annoying. Searching the web, led me to
+&lt;a href=&quot;https://git-scm.com/docs/git-credential-store&quot;&gt;git-credential-store&lt;/a&gt;.
+I was not too happy with the fact that credentials would be stored
+locally, indefinitely.
+I came across this
+stackoverflow
+&lt;a href=&quot;http://stackoverflow.com/questions/5343068/is-there-a-way-to-skip-password-typing-when-using-https-on-github/18362082#18362082&quot;&gt;post&lt;/a&gt; that
+I adapted for Linux. The concept is as follows:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Use a .netrc file to store your credentials. This follows the
+  file format for &lt;a href=&quot;https://www.ibm.com/support/knowledgecenter/SSB27U_6.2.0/com.ibm.zvm.v620.kijl0/netrcd.htm#netrcd&quot;&gt;netrc&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Encrypt this file,
+  using &lt;a href=&quot;https://www.gnupg.org/&quot;&gt;GNU Privacy Guard&lt;/a&gt;
+&amp;lt;!--more--&amp;gt;&lt;/li&gt;
+&lt;li&gt;Download and add
+  the
+  &lt;a href=&quot;https://raw.githubusercontent.com/git/git/master/contrib/credential/netrc/git-credential-netrc&quot;&gt;git credential helper script&lt;/a&gt; to
+  your path.&lt;/li&gt;
+&lt;li&gt;Update git config to tell it to use the encrypted credentials file&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3&gt;STEP 1: The .netrc file&lt;/h3&gt;
+
+&lt;p&gt;As described in the link above, the .netrc file follows a standard and
+looks like this: &lt;a href=&quot;/assets/gpg3.png&quot;&gt;&lt;img src=&quot;/assets/gpg3.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;We save this in our home directory - this is obviously clear-text. We will now
+encrypt the file and delete the clear-text one&lt;/p&gt;
+
+&lt;h3&gt;STEP 2: Encrypt the .netrc file&lt;/h3&gt;
+
+&lt;p&gt;GNU Privacy Guard, was new to me. Solving this specific problem also
+taught me about how to use GPG in general to sign and encrypt any
+piece of data that needs to be exchanged securely. The basic premise
+is we create a public/private key pair, similar to SSH. This is stored
+in a &amp;quot;key-ring&amp;quot; on our computer. We can potentially add other trusted
+public-keys to this key-ring and decrypt/verify files that are signed
+by the sender&amp;#39;s private key.
+For our example, here is how I did it:&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;GENERATE THE KEY PAIRS&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/gpg1.png&quot;&gt;&lt;img src=&quot;/assets/gpg1.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;After moving the mouse around for a bit:&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/gpg2.png&quot;&gt;&lt;img src=&quot;/assets/gpg2.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;You can see the keyring :&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/gpg4.png&quot;&gt;&lt;img src=&quot;/assets/gpg4.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Now we can use our private key to encrypt the .netrc file&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/gpg5.png&quot;&gt;&lt;img src=&quot;/assets/gpg5.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;(I had to specify a recipient. In our case since github was going to
+use my email id as the &amp;#39;end-user&amp;#39; to decrypt the .netrc file, I
+specified it as the recipient)&lt;/p&gt;
+
+&lt;p&gt;At this point, you may delete your clear text .netrc and will be left
+with a .netrc.gpg file&lt;/p&gt;
+
+&lt;h3&gt;STEP 3: Download and add the git credential helper:&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://raw.githubusercontent.com/git/git/master/contrib/credential/netrc/git-credential-netrc&quot;&gt;This perl script&lt;/a&gt; is
+used by git to unencrypt the .netrc.gpg file. So you will need to make
+it executable and store it in a directory in your &lt;code&gt;$PATH&lt;/code&gt;
+variable.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;&lt;span&gt;&lt;/span&gt;curl -o /home/ajay/bin/git-credential-netrc https://raw.github.com/git/git/master/contrib/credential/net‌​rc/git-credential-ne‌​trc
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h3&gt;STEP 4: Tell git about the encrypted credentials&lt;/h3&gt;
+
+&lt;p&gt;Finally, you use the git config command to inform git to use the
+credential helper. This is when you also point it to the location of
+the newly encrypted .netrc.gpg file.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;&lt;span&gt;&lt;/span&gt;git config --local credential.helper &lt;span class=&quot;s2&quot;&gt;&amp;quot;netrc -f /home/ajay/.netrc.gpg -v -d&amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;( The -v and -d are diagnostic flags - verbose/debug. This helps you
+track issues if you run into any. )&lt;/p&gt;
+
+&lt;p&gt;If you happen to follow these steps and if you had any questions, I
+would be happy to help and hopefully better my understanding as well.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Test Driven Development (TDD) for networks,  using Ansible</title>
+   <link href="http://localhost:4000/2017/04/12/observations/"/>
+   <updated>2017-04-12T00:00:00-04:00</updated>
+   <id>http://localhost:4000/2017/04/12/observations</id>
+   <content type="html">&lt;p&gt;In it&amp;#39;s most basic form, TDD works as follows:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&lt;span&gt;&lt;/span&gt;1. Envision the outcome of what you are developing [ Adding a VLAN
+   to a switch ]
+2. Write a test to validate that outcome [ Is the desired VLAN on
+   the switch ]
+3. Run the playbook, to invoke the test [ it will fail - RED test
+   ]
+4. Refactor your code [ write the roles/tasks needed for the tests
+   to pass ]
+5. Re-run tests [role] to ensure that they now pass
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;In this post, I hope to share my observations on how I used ansible to
+implement this using roles. I start with known facts/assumptions:&lt;/p&gt;
+
+&lt;!--more--&gt;
+
+&lt;p&gt;&lt;em&gt;ASSUMPTION:&lt;/em&gt; Given that the VLAN to be added is 101, it should be
+applied to devices &lt;code&gt;nxos-spine1 &amp;amp; nxos-spine2&lt;/code&gt; and stp priority
+set as &lt;code&gt;4096&lt;/code&gt; and &lt;code&gt;8192&lt;/code&gt; respectively.&lt;/p&gt;
+
+&lt;p&gt;Following the basic rules listed out at the start of this post let&amp;#39;s
+translate that to ansible code:&lt;/p&gt;
+
+&lt;p&gt;(Only snippets are on the blog, for the full playbook, please see &lt;a href=&quot;https://github.com/termlen0/TDD_ansible&quot;&gt;repo&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Though the focus of this post is to demonstrate TDD methodologies -  and
+how we might use them in developing network configurations -  it also
+introduces stratergies around using roles, tags and the &lt;em&gt;reusability&lt;/em&gt;
+of roles.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;STEP1&lt;/em&gt;: Start with a playbook that calls a role named validation&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;that&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;p p-Indicator&quot;&gt;{{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;desired_vlan&lt;/span&gt; &lt;span class=&quot;p p-Indicator&quot;&gt;}}&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;vlan_list &amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span&gt;&lt;/span&gt;TASK [validate : assert] *******************************************************
+&lt;span class=&quot;gd&quot;&gt;- fatal: [nxos-spine1]: FAILED! =&amp;gt; {&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-    &amp;quot;assertion&amp;quot;: &amp;quot;&amp;#39;101&amp;#39; in vlan_list &amp;quot;,&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-    &amp;quot;changed&amp;quot;: false,&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-    &amp;quot;evaluated_to&amp;quot;: false,&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-    &amp;quot;failed&amp;quot;: true&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;- }&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;At this point, our playbook dir looks as follows&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;&lt;span&gt;&lt;/span&gt;.
+├── inventory
+├── pb.yaml
+└── roles
+    └── validate
+        └── tasks
+            ├── main.yaml
+            └── vlantest.yaml
+
+&lt;span class=&quot;m&quot;&gt;3&lt;/span&gt; directories, &lt;span class=&quot;m&quot;&gt;4&lt;/span&gt; files
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;em&gt;STEP2&lt;/em&gt;: Now, refactor the playbook to add the VLAN  to the switches&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span&gt;&lt;/span&gt;TASK [add_vlan : Add the desired vlan to the switch] ***************************
+&lt;span class=&quot;gi&quot;&gt;+ ok: [nxos-spine1]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And our playbook at this point has the following structure&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;&lt;span&gt;&lt;/span&gt;.
+├── inventory
+├── pb.yaml
+└── roles
+    ├── add_vlan
+    │   └── tasks
+    │       └── main.yaml
+    └── validate
+        └── tasks
+            ├── main.yaml
+            └── vlantest.yaml
+
+&lt;span class=&quot;m&quot;&gt;5&lt;/span&gt; directories, &lt;span class=&quot;m&quot;&gt;5&lt;/span&gt; files
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;em&gt;STEP3&lt;/em&gt;: Now, rerun the playbook, with the validation role and observe
+that all tests pass, in other words, the &amp;quot;GREEN&amp;quot; test.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span&gt;&lt;/span&gt;TASK [validate : assert] *******************************************************
+&lt;span class=&quot;gi&quot;&gt;+ ok: [nxos-spine1] =&amp;gt; {&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     &amp;quot;changed&amp;quot;: false,&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     &amp;quot;msg&amp;quot;: &amp;quot;All assertions passed&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+ }&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Note: Here is how I am invoking my playbook for each step&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;STEP1&lt;/em&gt;: &lt;code&gt;ansible-playbook -i inventory pb.yaml  --tags=test&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;STEP2&lt;/em&gt;: &lt;code&gt;ansible-playbook -i inventory pb.yaml  --tags=add&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;STEP3&lt;/em&gt;: &lt;code&gt;ansible-playbook -i inventory pb.yaml  --tags=test&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;The playbook uses 2 roles that have tags associated with them&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;roles&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;role&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;validate&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;tags&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;test&lt;/span&gt;
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;role&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;add_vlan&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;tags&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;add&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Also, pay attention to how the &lt;code&gt;main.yaml&lt;/code&gt; in the validate role
+is including all other yaml files that match *test.yaml. The
+implication is, that as your playbook scope expands, you can continue
+writing simple, units of test code and name them to match *test.yaml
+(for instance bgptest.yaml etc). If your team collects unit tests at a
+particular location, you now have a &lt;em&gt;reusable&lt;/em&gt; unit of code, allowing
+you to reuse this role in any playbook&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;Include all the test files&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;include&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;p p-Indicator&quot;&gt;{{&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;outer_item&lt;/span&gt; &lt;span class=&quot;p p-Indicator&quot;&gt;}}&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;with_fileglob&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;/vagrant/dhcp_helper/roles/validate/tasks/*test.yaml&amp;quot;&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;loop_control&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;loop_var&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;outer_item&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We are using a loop to include all the test files and we are replacing
+the standard &lt;em&gt;{{ item }}&lt;/em&gt; var with &lt;em&gt;{{ outer_item }}&lt;/em&gt; - Why?
+If the unit test files you are including through this loop themselves
+contain a loop, the value of &lt;em&gt;{{ item }}&lt;/em&gt; main will be passed into
+the unit test yaml. So we are explicitly setting the loop control
+variable in main to yaml to &lt;em&gt;{{ outer_yaml }}&lt;/em&gt;&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Of state, idempotency, and CI/CD in the brownfield network</title>
