@@ -6,13 +6,11 @@ comments: true
 
 After being used to OSX Keychains in my old mac, I wanted a similar
 functionality on my Linux laptop. Being prompted each time to login,
-while interacting with [github](https://github.com), for instance was
+while interacting with [github](https://github.com) for instance was
 annoying. Searching the web, led me to
 [git-credential-store](https://git-scm.com/docs/git-credential-store).
-I was not too happy with the fact that credentials would be stored
-locally, indefinitely.
-I came across this
-stackoverflow
+I was not too happy with the fact that credentials would be stored in
+clear text, locally, indefinitely. I came across this stackoverflow
 [post](http://stackoverflow.com/questions/5343068/is-there-a-way-to-skip-password-typing-when-using-https-on-github/18362082#18362082) that
 I adapted for Linux. The concept is as follows:
 
