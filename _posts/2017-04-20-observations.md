@@ -20,9 +20,7 @@ I adapted for Linux. The concept is as follows:
       using [GNU Privacy Guard](https://www.gnupg.org/)
       
 <!--more-->
-
-   3. Download and add
-      the
+   3. Download and add the
       [git credential helper script](https://raw.githubusercontent.com/git/git/master/contrib/credential/netrc/git-credential-netrc) to
       your path.
    4. Update git config to tell it to use the encrypted credentials file
