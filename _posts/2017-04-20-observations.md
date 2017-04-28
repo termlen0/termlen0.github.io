@@ -18,7 +18,9 @@ I adapted for Linux. The concept is as follows:
       file format for [netrc](https://www.ibm.com/support/knowledgecenter/SSB27U_6.2.0/com.ibm.zvm.v620.kijl0/netrcd.htm#netrcd)
    2. Encrypt this file,
       using [GNU Privacy Guard](https://www.gnupg.org/)
+      
 <!--more-->
+
    3. Download and add
       the
       [git credential helper script](https://raw.githubusercontent.com/git/git/master/contrib/credential/netrc/git-credential-netrc) to
