@@ -40,7 +40,7 @@ of roles._
 ``` yaml
 - assert:
     that:
-      - {{ "{{ desired_vlan" }} }} vlan_list "
+      - " {{ "{{ desired_vlan" }} }} in  vlan_list "
 ```
 
 ``` diff
@@ -143,7 +143,7 @@ you to reuse this role in any playbook
 ```yaml
 
 - name: Include all the test files
-  include: {{ "{{ outer_item" }} }}
+  include: " {{ "{{ outer_item" }}  }} "
   with_fileglob:
     - "/vagrant/dhcp_helper/roles/validate/tasks/*test.yaml"
   loop_control:

@@ -125,7 +125,7 @@ of roles.</em></p>
 <p><em>STEP1</em>: Start with a playbook that calls a role named validation</p>
 <div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">assert</span><span class="p p-Indicator">:</span>
     <span class="l l-Scalar l-Scalar-Plain">that</span><span class="p p-Indicator">:</span>
-      <span class="p p-Indicator">-</span> <span class="p p-Indicator">{{</span> <span class="nv">desired_vlan</span> <span class="p p-Indicator">}}</span> <span class="l l-Scalar l-Scalar-Plain">vlan_list &quot;</span>
+      <span class="p p-Indicator">-</span> <span class="s">&quot;</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">desired_vlan</span><span class="nv"> </span><span class="s">}}</span><span class="nv"> </span><span class="s">in</span><span class="nv">  </span><span class="s">vlan_list</span><span class="nv"> </span><span class="s">&quot;</span>
 </code></pre></div><div class="highlight"><pre><code class="language-diff" data-lang="diff"><span></span>TASK [validate : assert] *******************************************************
 <span class="gd">- fatal: [nxos-spine1]: FAILED! =&gt; {</span>
 <span class="gd">-    &quot;assertion&quot;: &quot;&#39;101&#39; in vlan_list &quot;,</span>
@@ -197,7 +197,7 @@ writing simple, units of test code and name them to match *test.yaml
 particular location, you now have a <em>reusable</em> unit of code, allowing
 you to reuse this role in any playbook</p>
 <div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">Include all the test files</span>
-  <span class="l l-Scalar l-Scalar-Plain">include</span><span class="p p-Indicator">:</span> <span class="p p-Indicator">{{</span> <span class="nv">outer_item</span> <span class="p p-Indicator">}}</span>
+  <span class="l l-Scalar l-Scalar-Plain">include</span><span class="p p-Indicator">:</span> <span class="s">&quot;</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">outer_item</span><span class="nv">  </span><span class="s">}}</span><span class="nv"> </span><span class="s">&quot;</span>
   <span class="l l-Scalar l-Scalar-Plain">with_fileglob</span><span class="p p-Indicator">:</span>
     <span class="p p-Indicator">-</span> <span class="s">&quot;/vagrant/dhcp_helper/roles/validate/tasks/*test.yaml&quot;</span>
   <span class="l l-Scalar l-Scalar-Plain">loop_control</span><span class="p p-Indicator">:</span>
