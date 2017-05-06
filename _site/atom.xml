@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2017-05-06T15:31:00-04:00</updated>
+ <updated>2017-05-06T15:33:26-04:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -33,8 +33,7 @@ I adapted for Linux. The concept is as follows:&lt;/p&gt;
 &lt;li&gt;Encrypt this file,
   using &lt;a href=&quot;https://www.gnupg.org/&quot;&gt;GNU Privacy Guard&lt;/a&gt;
 &amp;lt;!--more--&amp;gt;&lt;/li&gt;
-&lt;li&gt;Download and add
-  the
+&lt;li&gt;Download and add the
   &lt;a href=&quot;https://raw.githubusercontent.com/git/git/master/contrib/credential/netrc/git-credential-netrc&quot;&gt;git credential helper script&lt;/a&gt; to
   your path.&lt;/li&gt;
 &lt;li&gt;Update git config to tell it to use the encrypted credentials file&lt;/li&gt;
