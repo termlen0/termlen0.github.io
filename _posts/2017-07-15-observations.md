@@ -16,7 +16,9 @@ quite confident in my understanding of how YANG is being used for
 modeling (Either a service or a device) and how NETCONF was one of the
 protocols used to interact with the model. 
 However, I was getting lost trying to navigate the NXOS's YANG model
-over the NETCONF client. I first attempted to collect the device
+over the NETCONF client. 
+<!--more-->
+I first attempted to collect the device
 capabilities offered by the NETCONF `HELLO` and then collect the vlans
 configured on the device. Here is a breakdown of my flawed attempt.
 
