@@ -125,7 +125,7 @@ Out[85]:
 
 As you can see from the output, I am getting the vlan information back
 correctly (you can see details for vlan 1, 100, 101 & 102). However I
-was expecting this to conform to the yang model from the [published OpenConfig Model](https://github.com/YangModels/yang/blob/master/vendor/cisco/nx/7.0-3-I6-1/openconfig-vlan.yang)
+was expecting this to conform to the yang model from the [published Model](https://github.com/YangModels/yang/blob/master/vendor/cisco/nx/7.0-3-I6-1/Cisco-NX-OS-device.yang)
 and the output was nowhere close.
 
 After much searching on the web I ran into two of my colleagues'
