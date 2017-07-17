@@ -351,6 +351,6 @@ as follows (only a section shown)
   
 In summary, be vigilant about the API schema you are working with. It
 is very easy (especially for most of us who are just getting started),
-to not realize whether we are dealing with an YANG model or an XSD
+to not realize whether we are dealing with a YANG model or a XSD
 schema. Hopefully this post highlights the difference and helps
 further our collective understanding. Appreciate your feedback! 
