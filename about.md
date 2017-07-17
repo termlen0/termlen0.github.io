@@ -4,10 +4,18 @@ title: About
 ---
 <img src="../ajay_profile_mono.jpg" style="width:135px;height:160px;" >
 <p class="message">
-  Hey there! I'm Ajay Chenampara and I am a Senior Network Architect at GE 
+  Hey there! I'm Ajay Chenampara and I am a Senior Network Automation
+  Engineer at Network to Code. 
 </p>
 
-I have been doing network administration/engineering/design/architecture for a few years now (started right after college in 2000). For the last couple of years, I have been focused on trying to "smarten" how we do networks. 
+I have been doing network
+administration/engineering/design/architecture for a few years now
+(started right after college in 2000). For the last few years, I have
+been focused on trying to "smarten" how we do networks. 
+
+Fortunately at my job, I am able to purse network automation full time
+and also help spread the message and help fellow network engineers
+around the world.
 
 ###Some other things about me
 - Not a fan of acronym FUD induced by: "SDN", "SDWAN", "NFV", "VNF" etc (How on earth is WAN not the network!)
