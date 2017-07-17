@@ -133,8 +133,8 @@ blogs :
 1. [Jason's](https://twitter.com/jedelman8) [blog from over 2 years ago! ](http://jedelman.com/home/netconf-and-the-ncclient/) and
 2. A [more recent post from](https://projectme10.wordpress.com/2017/03/06/cisco-wants-you-to-use-apis-and-it-shows/) [Gabriele](https://twitter.com/GabrieleGerbino) ) 
 
-(This is truly one of the best parts of my job really, working with
-much smarter people than yourself)
+(This is truly one of the best parts of my job really; working with folks
+much smarter than yourself)
 
 After a quick chat with Jason I realized the source of my confusion. I
 was simply interacting with a NETCONF enabled XML API (exposing a XML
