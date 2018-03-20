@@ -9,12 +9,14 @@ _"Everybody automate everything, now!"_ - Enterprise CTO (who just got back from
 _"I wish my management would help bring in some of this cool network automation stuff I am learning from my peers online"_ - Network engineer
 
 
-I have heard these comments from numerous organizations; often from CTOs and engineers within the same organization. So if the topmost level of the management is laying down goals to automate "everything" and the engineers themselves are excited to make it happen, why is there a gap?
+I've heard these comments from numerous organizations; often from CTOs and engineers within the same organization. So if the topmost level of the management is laying down goals to automate "everything" and the engineers themselves are excited to make it happen, why is there a gap?
 
 ![](/assets/middle_mgmt.png)
 
 
 So are middle managers the problem? Across organizations, middle mangers could be senior network engineers who have advanced to a point where there is no technical growth path. They have become comfortable managing a team of network engineers and know how to hire network talent. The automation space is filled with technical jargon and buzzwords that are new (and therefore scary). Coming from a technical background fear of the unknown can be unnerving. 
+
+<!--more-->
 
 From my experience, looking at this objectively, some ofthe common questions/pitfalls a network organization faces with respect to taking on automation are as follows:
 
