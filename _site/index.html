@@ -79,17 +79,69 @@
           
         
       
+        
+          
+        
+      
 
       <a class="sidebar-nav-item" href="https://github.com/termlen0">GitHub project</a>
     </nav>
 
-    <p>&copy; 2017. All rights reserved.</p>
+    <p>&copy; 2018. All rights reserved.</p>
   </div>
 </div>
 
 
     <div class="content container">
       <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/2018/03/19/observations/">
+        Please reverse mentor your managers
+      </a>
+    </h1>
+
+    <span class="post-date">19 Mar 2018</span>
+
+    <p><em>&quot;Everybody automate everything, now!&quot;</em> - Enterprise CTO (who just got back from a industry networking event)</p>
+
+<p><em>&quot;I wish my management would help bring in some of this cool network automation stuff I am learning from my peers online&quot;</em> - Network engineer</p>
+
+<p>I&#39;ve heard these comments from numerous organizations; often from CTOs and engineers within the same organization. So if the topmost level of the management is laying down goals to automate &quot;everything&quot; and the engineers themselves are excited to make it happen, why is there a gap?</p>
+
+<p><img src="/assets/middle_mgmt.png" alt=""></p>
+
+<p>So are middle managers the problem? Across organizations, middle mangers could be senior network engineers who have advanced to a point where there is no technical growth path. They have become comfortable managing a team of network engineers and know how to hire network talent. The automation space is filled with technical jargon and buzzwords that are new (and therefore scary). Coming from a technical background fear of the unknown can be unnerving. </p>
+
+    <a href="/2018/03/19/observations/"> Read more </a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/2017/07/15/observations/">
+        NETCONF Ain't YANG
+      </a>
+    </h1>
+
+    <span class="post-date">15 Jul 2017</span>
+
+    <p>Obvious!</p>
+
+<p>Recently I was working on  YANG device models, using NETCONF to
+interact with the actual device (NXOS 7.0.3.I6.1). I was using
+Cisco&#39;s
+<a href="http://www.cisco.com/c/en/us/td/docs/switches/datacenter/nexus9000/sw/7-x/programmability/guide/b_Cisco_Nexus_9000_Series_NX-OS_Programmability_Guide_7x/b_Cisco_Nexus_9000_Series_NX-OS_Programmability_Guide_7x_chapter_010100.html">NX-OS Programmability Guide</a> for
+the 7.x version. I have had previous experience working with
+YANG and Cisco&#39;s NEDs through the tail-f/NSO product and was feeling
+quite confident in my understanding of how YANG is being used for
+modeling (Either a service or a device) and how NETCONF was one of the
+protocols used to interact with the model. 
+However, I was getting lost trying to navigate the NXOS&#39;s YANG model
+over the NETCONF client. </p>
+
+    <a href="/2017/07/15/observations/"> Read more </a>
+  </div>
   
   <div class="post">
     <h1 class="post-title">
@@ -172,62 +224,11 @@ words..</p>
     <a href="/2017/02/03/observations/"> Read more </a>
   </div>
   
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2016/12/28/observations/">
-        The need for a stateful variable tracker and an implementation example
-      </a>
-    </h1>
-
-    <span class="post-date">28 Dec 2016</span>
-
-    <p>When it comes to automation role models, network engineers have often looked up,
-to our compute brethren. For decades, compute admins have had tools that allowed
-them to execute scripts on systems at particular times: typically backups,
-rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
-Ansible, have empowered &#39;Developer Administrators&#39;, to stand up the entire app
-stack, automatically.</p>
-
-<p>In my network automation journey, I realized early on that, a big gap/obstacle
-for network automation is the need for a backend, to track positive
-integers; a source of truth, that knows what numeric value was last</p>
-
-    <a href="/2016/12/28/observations/"> Read more </a>
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2016/12/16/observations/">
-        Running ansible at scale
-      </a>
-    </h1>
-
-    <span class="post-date">16 Dec 2016</span>
-
-    <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
-Like most things though, the devil is in the details. Right off the bat, I ran into &quot;non-ansible&quot; related issues (tacacs/ssh).
-That brought the number of devices to about 270. Not a big number right?
-At the most basic level, yes, if I was simply pushing configs using the ios_config
-module.</p>
-
-<h2>Breakdown of the playbook</h2>
-
-<ol>
-<li>Execute a show run on the device and compile a local backup for each device</li>
-<li>Run a pre-flight report, specific to the interfaces we are going to impact (multiple ssh sessions per host)</li>
-<li>Build the configs locally</li>
-<li>Deploy the configs</li>
-<li>Validate the configs/Unit testing</li>
-</ol>
-
-    <a href="/2016/12/16/observations/"> Read more </a>
-  </div>
-  
 </div>
 
 <div class="pagination">
   
-    <span class="pagination-item older">Older</span>
+    <a class="pagination-item older" href="/page2">Older</a>
   
   
     <span class="pagination-item newer">Newer</span>
