@@ -91,3 +91,5 @@ track issues if you run into any. )
 
 If you happen to follow these steps and if you had any questions, I
 would be happy to help and hopefully better my understanding as well.
+
+{% include twitter_plug.html %}

@@ -103,3 +103,5 @@ should be able to grab
 the [iterable test playbook](https://github.com/termlen0/nsot-tester)
 to get an idea of how to use the stateful backend for your automation
 playbooks.
+
+{% include twitter_plug.html %}

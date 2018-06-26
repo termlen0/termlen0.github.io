@@ -129,3 +129,5 @@ devices - food for thought!
 I would love to hear your thoughts on the state of network automation
 for closed systems like routers and switches. Also feedback on this
 thought exercise would be awesome.
+
+{% include twitter_plug.html %}

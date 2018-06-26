@@ -356,3 +356,5 @@ is very easy (especially for most of us who are just getting started),
 to not realize whether we are dealing with a YANG model or a XSD
 schema. Hopefully this post highlights the difference and helps
 further our collective understanding. Appreciate your feedback! 
+
+{% include twitter_plug.html %}

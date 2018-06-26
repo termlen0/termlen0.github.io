@@ -46,3 +46,6 @@ the same commands. I could not recreate the issue. I had good connectivity each 
 For observation 3, I opened an [issue](https://github.com/ansible/ansible/issues/19345) with ansible. Based on the comments it was closed with, I guess, it is an expected
 behavior. Which means, for any playbook that has dynamic includes, we need to remember to send any variables that role will need, even though your tags may not be calling
 that role.
+
+{% include twitter_plug.html %}
+

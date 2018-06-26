@@ -84,3 +84,5 @@ For managers to be successful, IMO, they have to take a crash course to get fami
 In conclusion, I am convinced that the most resistance organizations are facing in the adoption of network automation is in the middle. I think this can be solved through education and partnering. If you've had experiences that were successful or otherwise do share. The community will benefit from our collective understanding of challenges across the board.
 
 
+
+{% include twitter_plug.html %}

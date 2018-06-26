@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2018-03-19T21:57:22-04:00</updated>
+ <updated>2018-06-26T16:13:15-04:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -86,6 +86,12 @@
 &lt;h3&gt;Conclusion&lt;/h3&gt;
 
 &lt;p&gt;In conclusion, I am convinced that the most resistance organizations are facing in the adoption of network automation is in the middle. I think this can be solved through education and partnering. If you&amp;#39;ve had experiences that were successful or otherwise do share. The community will benefit from our collective understanding of challenges across the board.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Twitter:&lt;/em&gt; &lt;a href=&quot;https://twitter.com/intent/tweet?url=http://localhost:4000/2018/03/19/observations/&amp;text=Please reverse mentor your managers&amp;via=termlen0&quot; 
+   target=&quot;_blank&quot;&gt; Share it with your followers&lt;/a&gt; 
+or 
+&lt;a href=&quot;https://twitter.com/termlen0&quot;&gt;
+  Follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  
@@ -431,6 +437,12 @@ is very easy (especially for most of us who are just getting started),
 to not realize whether we are dealing with a YANG model or a XSD
 schema. Hopefully this post highlights the difference and helps
 further our collective understanding. Appreciate your feedback! &lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Twitter:&lt;/em&gt; &lt;a href=&quot;https://twitter.com/intent/tweet?url=http://localhost:4000/2017/07/15/observations/&amp;text=NETCONF Ain't YANG&amp;via=termlen0&quot; 
+   target=&quot;_blank&quot;&gt; Share it with your followers&lt;/a&gt; 
+or 
+&lt;a href=&quot;https://twitter.com/termlen0&quot;&gt;
+  Follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  
@@ -523,6 +535,12 @@ track issues if you run into any. )&lt;/p&gt;
 
 &lt;p&gt;If you happen to follow these steps and if you had any questions, I
 would be happy to help and hopefully better my understanding as well.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Twitter:&lt;/em&gt; &lt;a href=&quot;https://twitter.com/intent/tweet?url=http://localhost:4000/2017/04/20/observations/&amp;text=OT - A quick post on using gpg to manage github in Linux&amp;via=termlen0&quot; 
+   target=&quot;_blank&quot;&gt; Share it with your followers&lt;/a&gt; 
+or 
+&lt;a href=&quot;https://twitter.com/termlen0&quot;&gt;
+  Follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  
@@ -648,6 +666,12 @@ If the unit test files you are including through this loop themselves
 contain a loop, the value of &lt;em&gt;{{ item }}&lt;/em&gt; main will be passed into
 the unit test yaml. So we are explicitly setting the loop control
 variable in main to yaml to &lt;em&gt;{{ outer_yaml }}&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Twitter:&lt;/em&gt; &lt;a href=&quot;https://twitter.com/intent/tweet?url=http://localhost:4000/2017/04/12/observations/&amp;text=Test Driven Development (TDD) for networks,  using Ansible&amp;via=termlen0&quot; 
+   target=&quot;_blank&quot;&gt; Share it with your followers&lt;/a&gt; 
+or 
+&lt;a href=&quot;https://twitter.com/termlen0&quot;&gt;
+  Follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  
@@ -776,6 +800,12 @@ devices - food for thought!&lt;/p&gt;
 &lt;p&gt;I would love to hear your thoughts on the state of network automation
 for closed systems like routers and switches. Also feedback on this
 thought exercise would be awesome.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Twitter:&lt;/em&gt; &lt;a href=&quot;https://twitter.com/intent/tweet?url=http://localhost:4000/2017/02/03/observations/&amp;text=Of state, idempotency, and CI/CD in the brownfield network&amp;via=termlen0&quot; 
+   target=&quot;_blank&quot;&gt; Share it with your followers&lt;/a&gt; 
+or 
+&lt;a href=&quot;https://twitter.com/termlen0&quot;&gt;
+  Follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  
@@ -890,6 +920,12 @@ should be able to grab
 the &lt;a href=&quot;https://github.com/termlen0/nsot-tester&quot;&gt;iterable test playbook&lt;/a&gt;
 to get an idea of how to use the stateful backend for your automation
 playbooks.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Twitter:&lt;/em&gt; &lt;a href=&quot;https://twitter.com/intent/tweet?url=http://localhost:4000/2016/12/28/observations/&amp;text=The need for a stateful variable tracker and an implementation example&amp;via=termlen0&quot; 
+   target=&quot;_blank&quot;&gt; Share it with your followers&lt;/a&gt; 
+or 
+&lt;a href=&quot;https://twitter.com/termlen0&quot;&gt;
+  Follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  
@@ -955,6 +991,12 @@ the same commands. I could not recreate the issue. I had good connectivity each 
 &lt;p&gt;For observation 3, I opened an &lt;a href=&quot;https://github.com/ansible/ansible/issues/19345&quot;&gt;issue&lt;/a&gt; with ansible. Based on the comments it was closed with, I guess, it is an expected
 behavior. Which means, for any playbook that has dynamic includes, we need to remember to send any variables that role will need, even though your tags may not be calling
 that role.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Twitter:&lt;/em&gt; &lt;a href=&quot;https://twitter.com/intent/tweet?url=http://localhost:4000/2016/12/16/observations/&amp;text=Running ansible at scale&amp;via=termlen0&quot; 
+   target=&quot;_blank&quot;&gt; Share it with your followers&lt;/a&gt; 
+or 
+&lt;a href=&quot;https://twitter.com/termlen0&quot;&gt;
+  Follow me on Twitter&lt;/a&gt;!&lt;/p&gt;
 </content>
  </entry>
  

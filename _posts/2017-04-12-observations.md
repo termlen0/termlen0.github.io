@@ -157,3 +157,6 @@ If the unit test files you are including through this loop themselves
 contain a loop, the value of *\{\{ item \}\}* main will be passed into
 the unit test yaml. So we are explicitly setting the loop control
 variable in main to yaml to *\{\{ outer_yaml \}\}*
+
+
+{% include twitter_plug.html %}
