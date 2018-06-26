@@ -35,3 +35,5 @@ pages_list:
 
 github:
   repo:           https://github.com/termlen0
+
+theme: jekyll-theme-minimal
