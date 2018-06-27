@@ -4,8 +4,7 @@ title: About
 ---
 <img src="../ajay_profile_mono.jpg" style="width:135px;height:160px;" >
 <p class="message">
-  Hey there! I'm Ajay Chenampara and I am a Senior Network Automation
-  Engineer at Network to Code. 
+  Hey there! I'm Ajay Chenampara and I am a Senior Solution Architect at Red Hat. 
 </p>
 
 I have been doing network
