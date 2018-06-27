@@ -86,6 +86,8 @@
         
       
         
+      
+        
           
         
       
@@ -107,6 +109,33 @@
 
     <div class="content container">
       <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/2018/06/26/observations/">
+        Part1 of a 2 part blog on using the Ansible network-engine's command parser
+      </a>
+    </h1>
+
+    <span class="post-date">26 Jun 2018</span>
+
+    <h3>A very brief introduction</h3>
+
+<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands. Commands that network engineers know and love that are &quot;pretty&quot; formatted but not structured. </p>
+
+<p>Until recently, I had only used <a href="https://github.com/google/textfsm">TextFSM</a> to do this. While TextFSM works, it has a significant learning curve. Last week I decided to give the <code>command_parser</code> module a spin and right off the bat my impressions were:</p>
+
+<ol>
+<li><p>If you are already comfortable using Ansible, you will feel at home working with the command parser</p></li>
+<li><p>The learning curve is much shorter without needing to worry about learning another domain specific language</p></li>
+</ol>
+
+<blockquote>
+<p>Note: This is in no way pitting one against the other. <strong>network-engine</strong> provides a <strong>textfsm_parser</strong> as well as the <strong>command_parser</strong></p>
+</blockquote>
+
+    <a href="/2018/06/26/observations/"> Read more </a>
+  </div>
   
   <div class="post">
     <h1 class="post-title">
@@ -209,32 +238,6 @@ I adapted for Linux. The concept is as follows:</p>
 implement this using roles. I start with known facts/assumptions:</p>
 
     <a href="/2017/04/12/observations/"> Read more </a>
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2017/02/03/observations/">
-        Of state, idempotency, and CI/CD in the brownfield network
-      </a>
-    </h1>
-
-    <span class="post-date">03 Feb 2017</span>
-
-    <p>This post is a consequence of an interesting conversation around
-declarative control systems with a colleague. Throughout the
-conversation, we kept coming back to the &#39;popularity&#39; of automation
-and specifically, how revolutionary, it appears for legacy, closed
-systems(aka 80% of network gear in enterprises). When you think about it,
-in a traditional control system (a bread toaster, in it&#39;s simplest
-form), we interact with the system as follows:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>1. We tell it (declare) what our desired outcome is (how brown do you
-want your toast)
-2. Inputs (the slices of bread)
-</code></pre></div>
-<p>The system then figures out how to achieve your end state. In other
-words..</p>
-
-    <a href="/2017/02/03/observations/"> Read more </a>
   </div>
   
 </div>
