@@ -7,9 +7,9 @@ comments: true
 
 ### A very brief introduction
 
-The [network-engine](https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md) role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers is the [command parser](https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md). As the name implies, command parser enables the user to parse the output of _show_ commands. Commands that network engineers know and love that are "pretty" formatted but not structured. 
+The [network-engine](https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md) role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the [command parser](https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md). As the name implies, command parser enables the user to parse the output of _show_ commands - commands that network engineers know and love, that are "pretty" formatted but not structured. 
 
-Until recently, I had only used [TextFSM](https://github.com/google/textfsm) to do this. While TextFSM works, it has a significant learning curve. Last week I decided to give the `command_parser` module a spin and right off the bat my impressions were:
+Until recently, I had only used [TextFSM](https://github.com/google/textfsm) to do this. While TextFSM works, it has a significant learning curve, IMO. Last week I decided to give the `command_parser` module a spin and right off the bat my impressions were:
 
 1. If you are already comfortable using Ansible, you will feel at home working with the command parser
 
@@ -20,14 +20,14 @@ Until recently, I had only used [TextFSM](https://github.com/google/textfsm) to 
 
 <!--more-->
 
-My intention through the 2 part blog is to write about how to build command parser templates using 2 examples in the hope it will help others and will serve as a reference when I need it later.
+My intention through the 2 part blog, is to write about how to build command parser templates using 2 examples. I hope it will help others and will serve as a reference when I need it later.
 
 However, first thing first - The official documentation is available here: [command parser directives](https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md)
 
 ### Diving in: parsing the output of `show ip interfaces brief` on a Cisco IOS device
 
 
-Rather than reiterate the documentation, lets dive in with an example. We'll start off with the playbook that captures the output of the `show ip interfaces brief` command.
+Rather than reiterate what is in the documentation, lets dive in with an example. We'll start off with the playbook that captures the output of the `show ip interfaces brief` command.
 
 
 ``` yaml
@@ -41,7 +41,7 @@ Rather than reiterate the documentation, lets dive in with an example. We'll sta
     - ansible-network.network-engine
 
   tasks:
-  - name: CAPTURE SHOW IP ROUTE
+  - name: CAPTURE SHOW IP INTERFACE
     ios_command:
       commands:
         - show ip interface brief
@@ -69,7 +69,7 @@ On running the playbook (and limiting it to a single device):
 ``` shell
 PLAY [GENERATE A REPORT ] ***************************************************************************
 
-TASK [CAPTURE SHOW IP ROUTE] ****************************************************************************
+TASK [CAPTURE SHOW IP INTERFACE] ****************************************************************************
 ok: [rtr1]
 
 TASK [DISPLAY THE OUTPUT] *****************************************************************************************************************************************************************************************
@@ -101,7 +101,7 @@ So far so good. We got the output of the show command. Now we can send this "blo
     - ansible-network.network-engine
 
   tasks:
-  - name: CAPTURE SHOW IP ROUTE
+  - name: CAPTURE SHOW IP INTERFACE
     ios_command:
       commands:
         - show ip interface brief
@@ -127,7 +127,7 @@ Now, we get into the meat of this blog. Using the `command_parser` module.
 
 This is my workflow for creating a new parser:
 
-1. Identify the regular expression/expressions needed to collect the data using regex101.come
+1. Identify the regular expression/expressions needed to collect the data using regex101.com
 
 2. Use the [parser directives](https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md) to test out the regular expression
 
