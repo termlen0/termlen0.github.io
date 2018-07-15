@@ -112,6 +112,32 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2017/04/12/observations/">
+        Test Driven Development (TDD) for networks,  using Ansible
+      </a>
+    </h1>
+
+    <span class="post-date">12 Apr 2017</span>
+
+    <p>In it&#39;s most basic form, TDD works as follows:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>1. Envision the outcome of what you are developing [ Adding a VLAN
+   to a switch ]
+2. Write a test to validate that outcome [ Is the desired VLAN on
+   the switch ]
+3. Run the playbook, to invoke the test [ it will fail - RED test
+   ]
+4. Refactor your code [ write the roles/tasks needed for the tests
+   to pass ]
+5. Re-run tests [role] to ensure that they now pass
+</code></pre></div>
+<p>In this post, I hope to share my observations on how I used ansible to
+implement this using roles. I start with known facts/assumptions:</p>
+
+    <a href="/2017/04/12/observations/"> Read more </a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2017/02/03/observations/">
         Of state, idempotency, and CI/CD in the brownfield network
       </a>

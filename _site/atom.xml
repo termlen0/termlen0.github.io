@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2018-06-27T11:27:18-04:00</updated>
+ <updated>2018-07-15T17:54:06-04:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -13,15 +13,379 @@
 
  
  <entry>
+   <title>Part2 of a 2 part blog on using the Ansible network-engine's command parser</title>
+   <link href="http://localhost:4000/2018/07/15/observations/"/>
+   <updated>2018-07-15T00:00:00-04:00</updated>
+   <id>http://localhost:4000/2018/07/15/observations</id>
+   <content type="html">&lt;p&gt;In &lt;a href=&quot;https://termlen0.github.io/2018/06/26/observations/&quot;&gt;Part 1&lt;/a&gt; of this 2 part series, I illustrated how to invoke the &lt;code&gt;command_parser&lt;/code&gt; module using the &lt;code&gt;network-engine&lt;/code&gt; role from Ansible. I then used it to illustrate how to build a simple parser, leveraging regex to convert unstructured device command output to structured data.&lt;/p&gt;
+
+&lt;p&gt;In this post, I&amp;#39;ll build on it, highlighting the command parser options that makes wrangling &lt;em&gt;any&lt;/em&gt; complex device output into structured output. In particular this post will deep-dive into the following directives:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;pattern_group&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;extend&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;The playbook and complete parser is available in &lt;a href=&quot;https://github.com/termlen0/parser_demo&quot;&gt;this git repo.&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;!--more--&gt;
+
+&lt;h3&gt;Understanding the output pattern&lt;/h3&gt;
+
+&lt;p&gt;We used &lt;code&gt;pattern_match&lt;/code&gt; in the last example to parse the output of the &lt;code&gt;show ip interface brief&lt;/code&gt; command. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;MATCH PATTERN&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;pattern_match&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;regex&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;down).*(up|down)&amp;quot;&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;match_all&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;yes&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;register&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;section&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Note that we used the &lt;code&gt;match_all&lt;/code&gt; parameter to match each regex group. This worked well for matching against the following command output, because we were working with a single line at a time.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span&gt;&lt;/span&gt;rtr1#sh ip int bri
+Interface              IP-Address      OK? Method Status                Protocol
+GigabitEthernet1       &lt;span class=&quot;m&quot;&gt;172&lt;/span&gt;.16.230.103  YES DHCP   up                    up      
+Loopback0              &lt;span class=&quot;m&quot;&gt;192&lt;/span&gt;.168.1.101   YES manual up                    up      
+rtr1#
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;What if we wanted to loop over entire sections in the output? Let&amp;#39;s illustrate using an example:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span&gt;&lt;/span&gt;rtr1#sh interfaces 
+GigabitEthernet1 is up, line protocol is up 
+  Hardware is CSR vNIC, address is 0e56.892c.0434 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;bia 0e56.892c.0434&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+  Internet address is &lt;span class=&quot;m&quot;&gt;172&lt;/span&gt;.16.230.103/16
+  MTU &lt;span class=&quot;m&quot;&gt;1500&lt;/span&gt; bytes, BW &lt;span class=&quot;m&quot;&gt;1000000&lt;/span&gt; Kbit/sec, DLY &lt;span class=&quot;m&quot;&gt;10&lt;/span&gt; usec, 
+     reliability &lt;span class=&quot;m&quot;&gt;255&lt;/span&gt;/255, txload &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;/255, rxload &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;/255
+  Encapsulation ARPA, loopback not &lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt;
+  Keepalive &lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;10&lt;/span&gt; sec&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+  Full Duplex, 1000Mbps, link &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt; is auto, media &lt;span class=&quot;nb&quot;&gt;type&lt;/span&gt; is Virtual
+  output flow-control is unsupported, input flow-control is unsupported
+  ARP type: ARPA, ARP Timeout &lt;span class=&quot;m&quot;&gt;04&lt;/span&gt;:00:00
+  Last input &lt;span class=&quot;m&quot;&gt;00&lt;/span&gt;:00:00, output &lt;span class=&quot;m&quot;&gt;00&lt;/span&gt;:00:00, output hang never
+  Last clearing of &lt;span class=&quot;s2&quot;&gt;&amp;quot;show interface&amp;quot;&lt;/span&gt; counters never
+  Input queue: &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;/375/0/0 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;size/max/drops/flushes&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; Total output drops: &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;
+  Queueing strategy: fifo
+  Output queue: &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt;/40 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;size/max&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;m&quot;&gt;5&lt;/span&gt; minute input rate &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; bits/sec, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; packets/sec
+  &lt;span class=&quot;m&quot;&gt;5&lt;/span&gt; minute output rate &lt;span class=&quot;m&quot;&gt;1000&lt;/span&gt; bits/sec, &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; packets/sec
+     &lt;span class=&quot;m&quot;&gt;204069&lt;/span&gt; packets input, &lt;span class=&quot;m&quot;&gt;21320843&lt;/span&gt; bytes, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; no buffer
+     Received &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; broadcasts &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; IP multicasts&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+     &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; runts, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; giants, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; throttles 
+     &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; input errors, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; CRC, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; frame, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; overrun, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; ignored
+     &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; watchdog, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; multicast, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; pause input
+     &lt;span class=&quot;m&quot;&gt;205563&lt;/span&gt; packets output, &lt;span class=&quot;m&quot;&gt;26944541&lt;/span&gt; bytes, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; underruns
+     &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; output errors, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; collisions, &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt; interface resets
+     &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; unknown protocol drops
+     &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; babbles, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; late collision, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; deferred
+     &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; lost carrier, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; no carrier, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; pause output
+     &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; output buffer failures, &lt;span class=&quot;m&quot;&gt;0&lt;/span&gt; output buffers swapped out
+Loopback0 is up, line protocol is up 
+  Hardware is Loopback
+  Internet address is &lt;span class=&quot;m&quot;&gt;192&lt;/span&gt;.168.1.101/24
+  MTU &lt;span class=&quot;m&quot;&gt;1514&lt;/span&gt; bytes, BW &lt;span class=&quot;m&quot;&gt;8000000&lt;/span&gt; Kbit/sec, DLY &lt;span class=&quot;m&quot;&gt;5000&lt;/span&gt; usec, 
+     reliability &lt;span class=&quot;m&quot;&gt;255&lt;/span&gt;/255, txload &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;/255, rxload &lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;/255
+  Encapsulation LOOPBACK, loopback not &lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt;
+  Keepalive &lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;10&lt;/span&gt; sec&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+  Last input never, output never, output hang never
+  Last clearing of &lt;span class=&quot;s2&quot;&gt;&amp;quot;show interface&amp;quot;&lt;/span&gt; counters never
+.
+.
+.
+.
+.
+&amp;lt;output omitted &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; brevity&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The &lt;code&gt;show interfaces&lt;/code&gt; command displays a wealth of information per interface. Let&amp;#39;s say we want to capture the following information:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Interface name&lt;/li&gt;
+&lt;li&gt;MTU&lt;/li&gt;
+&lt;li&gt;txload&lt;/li&gt;
+&lt;li&gt;rxload&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3&gt;Building a list&lt;/h3&gt;
+
+&lt;p&gt;The first step is to build a list using &lt;code&gt;pattern_match&lt;/code&gt; where each element of the list corresponds to all the information about an interface.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;parser meta data&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;parser_metadata&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;version&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;1.0&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;command&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;show interface&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;network_os&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;ios&lt;/span&gt;
+
+&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;match sections&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;pattern_match&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;regex&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;^(\\S+)&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;is.*(?:up|down),&amp;quot;&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;match_all&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;yes&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;match_greedy&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;yes&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;register&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;section&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;export&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;yes&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;blockquote&gt;
+&lt;p&gt;The &lt;code&gt;match_greedy&lt;/code&gt; will match everything after the regex match. The &lt;code&gt;match_all&lt;/code&gt; will match each interface as a distinct match and add it to the list variable called section. &lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Debugging this output in the playbook reveals the contents of the &lt;code&gt;section&lt;/code&gt; variable:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span&gt;&lt;/span&gt;TASK &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;DISPLAY THE PARSED OUTPUT&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; **************************************************************************************************ok: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;rtr1&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&amp;gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&amp;quot;section&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+        &lt;span class=&quot;s2&quot;&gt;&amp;quot;GigabitEthernet1 is up, line protocol is up \n  Hardware is CSR vNIC, address is 0e56.892c.0434 (bia 0e56.892c.0434)\n  Internet address is 172.16.230.103/16\n  MTU 1500 bytes, BW 1000000 Kbit/sec, DLY 10 usec, \n     reliability 255/255, txload 1/255, rxload 1/255\n  Encapsulation ARPA, loopback not set\n  Keepalive set (10 sec)\n  Full Duplex, 1000Mbps, link type is auto, media type is Virtual\n  output flow-control is unsupported, input flow-control is unsupported\n  ARP type: ARPA, ARP Timeout 04:00:00\n  Last input 00:00:00, output 00:00:00, output hang never\n  Last clearing of \&amp;quot;show interface\&amp;quot; counters never\n  Input queue: 0/375/0/0 (size/max/drops/flushes); Total output drops: 0\n  Queueing strategy: fifo\n  Output queue: 0/40 (size/max)\n  5 minute input &lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;rate 1000 bits/sec, 2 packets/sec\n  5 minute output rate 1000 bits/sec, 2 packets/sec\n     206723 packets input, 21601205 bytes, 0 no buffer\n     Received 0 broadcasts (0 IP multicasts)\n     0 runts, 0 giants, 0 throttles \n     0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored\n     0 watchdog, 0 multicast, 0 pause input\n     208526 packets output, 27353095 bytes, 0 underruns\n     0 output errors, 0 collisions, 1 interface resets\n     0 unknown protocol drops\n     0 babbles, 0 late collision, 0 deferred\n     0 lost carrier, 0 no carrier, 0 pause output\n     0 output buffer failures, 0 output buffers swapped out\n&amp;quot;&lt;/span&gt;, 
+        &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback0 is up, line protocol is up \n  Hardware is Loopback\n  Internet address is 192.168.1.101/24\n  MTU 1514 bytes, BW 8000000 Kbit/sec, DLY 5000 usec, \n     reliability 255/255, txload 1/255, rxload 1/255\n  Encapsulation LOOPBACK, loopback not set\n  Keepalive set (10 sec)\n  Last input never, output never, output hang never\n  Last clearing of \&amp;quot;show interface\&amp;quot; counters never\n  Input queue: 0/75/0/0 (size/max/drops/flushes); Total output drops: 0\n  Que&lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;&amp;lt;output omitted for brevity&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Note that all info about Gig1 is the first element of this list. Loopback0 is the second element and so on.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3&gt;Building a pattern group&lt;/h3&gt;
+
+&lt;p&gt;Now that we have list, we can use the same design patterns we are familiar with in Ansible, using loops. Using the &lt;code&gt;pattern_group&lt;/code&gt; directive we can now build a new nested variable that uses the &lt;code&gt;pattern_match&lt;/code&gt; directive.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;match interface values&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;pattern_group&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;match name&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;pattern_match&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;regex&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;^(\\S+)&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;register&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;
+
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;match mtu&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;pattern_match&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;regex&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;MTU&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;(\\d+)&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;register&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;mtu&lt;/span&gt;
+
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;match txload&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;pattern_match&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;regex&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;reliability.*txload\\s(\\S+),.*&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;register&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;txload&lt;/span&gt;
+
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;match rxload&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;pattern_match&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;regex&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;reliability.*rxload\\s(\\S+)&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;item&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;register&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;rxload&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;loop&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;section&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;register&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;interfaces&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;export&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;yes&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Effectively, we are looping through the data of each interface and creating a pattern group (registering it as a variable called &lt;code&gt;interfaces&lt;/code&gt;). Note the similarity of pattern using the &lt;code&gt;item&lt;/code&gt; variable while working with loops in Ansible. Each of the &lt;code&gt;pattern_match&lt;/code&gt; directives nested within the &lt;code&gt;pattern_group&lt;/code&gt; is using a regex to match the data we wanted at the start.&lt;/p&gt;
+
+&lt;p&gt;On re-running the playbook with the updated parser, our debug output looks as follows:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span&gt;&lt;/span&gt;TASK &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;DISPLAY THE PARSED OUTPUT&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; **************************************************************************************************
+ok: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;rtr1&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&amp;gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&amp;quot;interfaces&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;mtu&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;matches&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;1500&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;matches&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;GigabitEthernet1&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;rxload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;matches&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;txload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;matches&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+        &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;mtu&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;matches&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;1514&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;matches&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback0&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;rxload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;matches&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;txload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;matches&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+.
+.
+.
+.
+.
+&amp;lt;output omitted &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; brevity&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h3&gt;Creating a JSON output&lt;/h3&gt;
+
+&lt;p&gt;Now that we have our regular expressions sorted out and we can see that the data we are interested in is being returned as a structured object, all that remains is to build a JSON object similar to how we did it in &lt;a href=&quot;https://termlen0.github.io/2018/06/26/observations/&quot;&gt;Part1&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;generate json data structure&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;json_template&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;template&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;item.name.matches.0&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;config&lt;/span&gt;
+          &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;object&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;
+              &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;item.name.matches.0&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+            &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;mtu&lt;/span&gt;
+              &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;item.mtu.matches.0&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+            &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;rxload&lt;/span&gt;
+              &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;item.rxload.matches.0&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+            &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;txload&lt;/span&gt;
+              &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;item.txload.matches.0&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;loop&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;interfaces&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;export&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;yes&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;register&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;interface_facts&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Re-running the playbook and debugging &lt;code&gt;interface_facts&lt;/code&gt; shows us the final, desired output.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span&gt;&lt;/span&gt;TASK &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;DISPLAY THE PARSED OUTPUT&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; **************************************************************************************************
+ok: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;rtr1&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&amp;gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&amp;quot;interface_facts&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;GigabitEthernet1&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;config&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;mtu&amp;quot;&lt;/span&gt;: &lt;span class=&quot;m&quot;&gt;1500&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;GigabitEthernet1&amp;quot;&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;rxload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;txload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+        &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback0&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;config&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;mtu&amp;quot;&lt;/span&gt;: &lt;span class=&quot;m&quot;&gt;1514&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback0&amp;quot;&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;rxload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;txload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This is why I think &lt;code&gt;command_parser&lt;/code&gt; is such a powerful tool to parse complex show command output, using the same Ansible design patterns we are familiar with, without needing to learn yet another domain specific syntax or language. As network engineers we now have a tool that abstracts away the underlying complexity of programming.&lt;/p&gt;
+
+&lt;p&gt;Alright now on to some more &lt;code&gt;command_parser&lt;/code&gt; goodness!.....&lt;/p&gt;
+
+&lt;h3&gt;Building customized &amp;quot;facts&amp;quot; without needing to write a module!&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;NOTE: THE FOLLOWING WORKS &lt;em&gt;ONLY&lt;/em&gt; WITH THE DEVEL BRANCH OF THE NETWORK-ENGINE ROLE AT THE TIME OF THIS POST&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;If you have used the network modules in Ansible you are probably familiar with the &lt;code&gt;*_facts&lt;/code&gt; modules. Modules like &lt;code&gt;ios_facts&lt;/code&gt;, &lt;code&gt;eos_facts&lt;/code&gt;, &lt;code&gt;junos_facts&lt;/code&gt; etc. While you can have limited control over the output from these modules (by using the &lt;code&gt;gather_subset&lt;/code&gt; directive), you are by and large restricted to what the module creators consider &lt;strong&gt;&amp;quot;facts&amp;quot;&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the following section, let&amp;#39;s look at a powerful directive from the &lt;code&gt;command_parser&lt;/code&gt; module called &lt;code&gt;extend&lt;/code&gt; to learn how we can build our own customized facts parser - without needing to write a single line of code!!&lt;/p&gt;
+
+&lt;p&gt;We&amp;#39;ll use the parsers we created in Part1 and the above one to create a single variable called &lt;code&gt;ios_interface_facts&lt;/code&gt;. &lt;/p&gt;
+
+&lt;p&gt;The basic changes needed to the parsers are as follows:&lt;/p&gt;
+
+&lt;h6&gt;show_ip_interfaces.yaml&lt;/h6&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;extend&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;ios_interface_facts&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;and&lt;/p&gt;
+
+&lt;h6&gt;show_interfaces.yaml&lt;/h6&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;export_as&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;dict&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;extend&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;ios_interface_facts&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;blockquote&gt;
+&lt;p&gt;These directives are added to the &lt;code&gt;json_template&lt;/code&gt; section of the parser. Please see the github  &lt;a href=&quot;https://github.com/termlen0/parser_demo&quot;&gt;repo&lt;/a&gt; for details. You will need to uncomment them to test.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;With this in place, re-running the playbook and debugging the &lt;code&gt;ios_interfaces_facts&lt;/code&gt; variable shows how the output of both the above parsers are made available in a single variable.&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Note: Run the playbook invoking the &lt;strong&gt;demo_extend&lt;/strong&gt; tag if you are testing with the sample &lt;a href=&quot;https://github.com/termlen0/parser_demo&quot;&gt;repo&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span&gt;&lt;/span&gt;TASK &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;DISPLAY THE GENERATED FACT&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; ****************************************************************************************************************
+ok: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;rtr1&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&amp;gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&amp;quot;ios_interface_facts&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;s2&quot;&gt;&amp;quot;interface_facts&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;GigabitEthernet1&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;config&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;mtu&amp;quot;&lt;/span&gt;: &lt;span class=&quot;m&quot;&gt;1500&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;GigabitEthernet1&amp;quot;&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;rxload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;txload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback0&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;config&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;mtu&amp;quot;&lt;/span&gt;: &lt;span class=&quot;m&quot;&gt;1514&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback0&amp;quot;&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;rxload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;, 
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;txload&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;1/255&amp;quot;&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback1&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+.
+.
+.
+.
+.
+&amp;lt;output omitted &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; brevity&amp;gt;
+        &lt;span class=&quot;s2&quot;&gt;&amp;quot;ip_interface_facts&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;GigabitEthernet1&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;data&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;admin_state&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;up&amp;quot;&lt;/span&gt;, 
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;ip&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;172.16.230.103&amp;quot;&lt;/span&gt;, 
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;GigabitEthernet1&amp;quot;&lt;/span&gt;, 
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;protocol_state&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;up&amp;quot;&lt;/span&gt;
+                    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback0&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;data&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;admin_state&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;up&amp;quot;&lt;/span&gt;, 
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;ip&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;192.168.1.101&amp;quot;&lt;/span&gt;, 
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback0&amp;quot;&lt;/span&gt;, 
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;protocol_state&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;up&amp;quot;&lt;/span&gt;
+                    &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+                &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;, 
+            &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;s2&quot;&gt;&amp;quot;Loopback1&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;s2&quot;&gt;&amp;quot;data&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;admin_state&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;up&amp;quot;&lt;/span&gt;, 
+                        &lt;span class=&quot;s2&quot;&gt;&amp;quot;ip&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;10.1.1.101&amp;quot;&lt;/span&gt;, 
+.
+.
+.
+.
+.
+&amp;lt;output omitted &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; brevity&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;As you can see the &lt;code&gt;ios_interfaces_facts&lt;/code&gt; is a nested object that contains 2 keys &lt;code&gt;interface_facts&lt;/code&gt; - the parsed output of the &lt;em&gt;show interfaces&lt;/em&gt; command - and the &lt;code&gt;ip_interface_facts&lt;/code&gt; - the parsed output of the &lt;em&gt;show ip interface brief&lt;/em&gt; command.&lt;/p&gt;
+
+&lt;p&gt;Hopefully this quick illustration of some of the powerful directives within command parser are helpful to you. I&amp;#39;d love to hear what your thoughts are on this approach and perceived ease/difficulty with this method of parsing device command output.&lt;/p&gt;
+</content>
+ </entry>
+ 
+ <entry>
    <title>Part1 of a 2 part blog on using the Ansible network-engine's command parser</title>
    <link href="http://localhost:4000/2018/06/26/observations/"/>
    <updated>2018-06-26T00:00:00-04:00</updated>
    <id>http://localhost:4000/2018/06/26/observations</id>
    <content type="html">&lt;h3&gt;A very brief introduction&lt;/h3&gt;
 
-&lt;p&gt;The &lt;a href=&quot;https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md&quot;&gt;network-engine&lt;/a&gt; role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers is the &lt;a href=&quot;https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md&quot;&gt;command parser&lt;/a&gt;. As the name implies, command parser enables the user to parse the output of &lt;em&gt;show&lt;/em&gt; commands. Commands that network engineers know and love that are &amp;quot;pretty&amp;quot; formatted but not structured. &lt;/p&gt;
+&lt;p&gt;The &lt;a href=&quot;https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md&quot;&gt;network-engine&lt;/a&gt; role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the &lt;a href=&quot;https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md&quot;&gt;command parser&lt;/a&gt;. As the name implies, command parser enables the user to parse the output of &lt;em&gt;show&lt;/em&gt; commands - commands that network engineers know and love, that are &amp;quot;pretty&amp;quot; formatted but not structured. &lt;/p&gt;
 
-&lt;p&gt;Until recently, I had only used &lt;a href=&quot;https://github.com/google/textfsm&quot;&gt;TextFSM&lt;/a&gt; to do this. While TextFSM works, it has a significant learning curve. Last week I decided to give the &lt;code&gt;command_parser&lt;/code&gt; module a spin and right off the bat my impressions were:&lt;/p&gt;
+&lt;p&gt;Until recently, I had only used &lt;a href=&quot;https://github.com/google/textfsm&quot;&gt;TextFSM&lt;/a&gt; to do this. While TextFSM works, it has a significant learning curve, IMO. Last week I decided to give the &lt;code&gt;command_parser&lt;/code&gt; module a spin and right off the bat my impressions were:&lt;/p&gt;
 
 &lt;ol&gt;
 &lt;li&gt;&lt;p&gt;If you are already comfortable using Ansible, you will feel at home working with the command parser&lt;/p&gt;&lt;/li&gt;
@@ -34,13 +398,13 @@
 
 &lt;!--more--&gt;
 
-&lt;p&gt;My intention through the 2 part blog is to write about how to build command parser templates using 2 examples in the hope it will help others and will serve as a reference when I need it later.&lt;/p&gt;
+&lt;p&gt;My intention through the 2 part blog, is to write about how to build command parser templates using 2 examples. I hope it will help others and will serve as a reference when I need it later.&lt;/p&gt;
 
 &lt;p&gt;However, first thing first - The official documentation is available here: &lt;a href=&quot;https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md&quot;&gt;command parser directives&lt;/a&gt;&lt;/p&gt;
 
 &lt;h3&gt;Diving in: parsing the output of &lt;code&gt;show ip interfaces brief&lt;/code&gt; on a Cisco IOS device&lt;/h3&gt;
 
-&lt;p&gt;Rather than reiterate the documentation, lets dive in with an example. We&amp;#39;ll start off with the playbook that captures the output of the &lt;code&gt;show ip interfaces brief&lt;/code&gt; command.&lt;/p&gt;
+&lt;p&gt;Rather than reiterate what is in the documentation, lets dive in with an example. We&amp;#39;ll start off with the playbook that captures the output of the &lt;code&gt;show ip interfaces brief&lt;/code&gt; command.&lt;/p&gt;
 &lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;---&lt;/span&gt;
 &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;GENERATE A REPORT&lt;/span&gt;
   &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;hosts&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;cisco&lt;/span&gt;
@@ -51,7 +415,7 @@
     &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;ansible-network.network-engine&lt;/span&gt;
 
   &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;tasks&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
-  &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;CAPTURE SHOW IP ROUTE&lt;/span&gt;
+  &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;CAPTURE SHOW IP INTERFACE&lt;/span&gt;
     &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;ios_command&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
       &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;commands&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
         &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;show ip interface brief&lt;/span&gt;
@@ -69,7 +433,7 @@
 &lt;p&gt;On running the playbook (and limiting it to a single device):&lt;/p&gt;
 &lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;&lt;span&gt;&lt;/span&gt;PLAY &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;GENERATE A REPORT &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; ***************************************************************************
 
-TASK &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;CAPTURE SHOW IP ROUTE&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; ****************************************************************************
+TASK &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;CAPTURE SHOW IP INTERFACE&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; ****************************************************************************
 ok: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;rtr1&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
 
 TASK &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;DISPLAY THE OUTPUT&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; *****************************************************************************************************************************************************************************************
@@ -93,7 +457,7 @@ rtr1                       : &lt;span class=&quot;nv&quot;&gt;ok&lt;/span&gt;&lt
     &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;ansible-network.network-engine&lt;/span&gt;
 
   &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;tasks&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
-  &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;CAPTURE SHOW IP ROUTE&lt;/span&gt;
+  &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;CAPTURE SHOW IP INTERFACE&lt;/span&gt;
     &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;ios_command&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
       &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;commands&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
         &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;show ip interface brief&lt;/span&gt;
@@ -114,7 +478,7 @@ rtr1                       : &lt;span class=&quot;nv&quot;&gt;ok&lt;/span&gt;&lt
 &lt;p&gt;This is my workflow for creating a new parser:&lt;/p&gt;
 
 &lt;ol&gt;
-&lt;li&gt;&lt;p&gt;Identify the regular expression/expressions needed to collect the data using regex101.come&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Identify the regular expression/expressions needed to collect the data using regex101.com&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;Use the &lt;a href=&quot;https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md&quot;&gt;parser directives&lt;/a&gt; to test out the regular expression&lt;/p&gt;&lt;/li&gt;
 &lt;li&gt;&lt;p&gt;Iterate and refine&lt;/p&gt;&lt;/li&gt;
 &lt;/ol&gt;

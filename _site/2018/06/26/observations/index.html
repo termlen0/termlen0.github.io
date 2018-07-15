@@ -113,9 +113,9 @@
   <span class="post-date">26 Jun 2018</span>
   <h3>A very brief introduction</h3>
 
-<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands. Commands that network engineers know and love that are &quot;pretty&quot; formatted but not structured. </p>
+<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands - commands that network engineers know and love, that are &quot;pretty&quot; formatted but not structured. </p>
 
-<p>Until recently, I had only used <a href="https://github.com/google/textfsm">TextFSM</a> to do this. While TextFSM works, it has a significant learning curve. Last week I decided to give the <code>command_parser</code> module a spin and right off the bat my impressions were:</p>
+<p>Until recently, I had only used <a href="https://github.com/google/textfsm">TextFSM</a> to do this. While TextFSM works, it has a significant learning curve, IMO. Last week I decided to give the <code>command_parser</code> module a spin and right off the bat my impressions were:</p>
 
 <ol>
 <li><p>If you are already comfortable using Ansible, you will feel at home working with the command parser</p></li>
@@ -128,13 +128,13 @@
 
 <!--more-->
 
-<p>My intention through the 2 part blog is to write about how to build command parser templates using 2 examples in the hope it will help others and will serve as a reference when I need it later.</p>
+<p>My intention through the 2 part blog, is to write about how to build command parser templates using 2 examples. I hope it will help others and will serve as a reference when I need it later.</p>
 
 <p>However, first thing first - The official documentation is available here: <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md">command parser directives</a></p>
 
 <h3>Diving in: parsing the output of <code>show ip interfaces brief</code> on a Cisco IOS device</h3>
 
-<p>Rather than reiterate the documentation, lets dive in with an example. We&#39;ll start off with the playbook that captures the output of the <code>show ip interfaces brief</code> command.</p>
+<p>Rather than reiterate what is in the documentation, lets dive in with an example. We&#39;ll start off with the playbook that captures the output of the <code>show ip interfaces brief</code> command.</p>
 <div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="nn">---</span>
 <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">GENERATE A REPORT</span>
   <span class="l l-Scalar l-Scalar-Plain">hosts</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">cisco</span>
@@ -145,7 +145,7 @@
     <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ansible-network.network-engine</span>
 
   <span class="l l-Scalar l-Scalar-Plain">tasks</span><span class="p p-Indicator">:</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">CAPTURE SHOW IP ROUTE</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">CAPTURE SHOW IP INTERFACE</span>
     <span class="l l-Scalar l-Scalar-Plain">ios_command</span><span class="p p-Indicator">:</span>
       <span class="l l-Scalar l-Scalar-Plain">commands</span><span class="p p-Indicator">:</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">show ip interface brief</span>
@@ -163,7 +163,7 @@
 <p>On running the playbook (and limiting it to a single device):</p>
 <div class="highlight"><pre><code class="language-shell" data-lang="shell"><span></span>PLAY <span class="o">[</span>GENERATE A REPORT <span class="o">]</span> ***************************************************************************
 
-TASK <span class="o">[</span>CAPTURE SHOW IP ROUTE<span class="o">]</span> ****************************************************************************
+TASK <span class="o">[</span>CAPTURE SHOW IP INTERFACE<span class="o">]</span> ****************************************************************************
 ok: <span class="o">[</span>rtr1<span class="o">]</span>
 
 TASK <span class="o">[</span>DISPLAY THE OUTPUT<span class="o">]</span> *****************************************************************************************************************************************************************************************
@@ -187,7 +187,7 @@ rtr1                       : <span class="nv">ok</span><span class="o">=</span><
     <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ansible-network.network-engine</span>
 
   <span class="l l-Scalar l-Scalar-Plain">tasks</span><span class="p p-Indicator">:</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">CAPTURE SHOW IP ROUTE</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">CAPTURE SHOW IP INTERFACE</span>
     <span class="l l-Scalar l-Scalar-Plain">ios_command</span><span class="p p-Indicator">:</span>
       <span class="l l-Scalar l-Scalar-Plain">commands</span><span class="p p-Indicator">:</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">show ip interface brief</span>
@@ -208,7 +208,7 @@ rtr1                       : <span class="nv">ok</span><span class="o">=</span><
 <p>This is my workflow for creating a new parser:</p>
 
 <ol>
-<li><p>Identify the regular expression/expressions needed to collect the data using regex101.come</p></li>
+<li><p>Identify the regular expression/expressions needed to collect the data using regex101.com</p></li>
 <li><p>Use the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md">parser directives</a> to test out the regular expression</p></li>
 <li><p>Iterate and refine</p></li>
 </ol>
@@ -381,6 +381,15 @@ data-via="termlen0">Tweet</a>
     
       <li>
         <h3>
+          <a href="/2018/07/15/observations/">
+            Part2 of a 2 part blog on using the Ansible network-engine's command parser
+            <small>15 Jul 2018</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
           <a href="/2018/03/19/observations/">
             Please reverse mentor your managers
             <small>19 Mar 2018</small>
@@ -393,15 +402,6 @@ data-via="termlen0">Tweet</a>
           <a href="/2017/07/15/observations/">
             NETCONF Ain't YANG
             <small>15 Jul 2017</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
-          <a href="/2017/04/20/observations/">
-            OT - A quick post on using gpg to manage github in Linux
-            <small>20 Apr 2017</small>
           </a>
         </h3>
       </li>

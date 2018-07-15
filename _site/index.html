@@ -112,6 +112,29 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2018/07/15/observations/">
+        Part2 of a 2 part blog on using the Ansible network-engine's command parser
+      </a>
+    </h1>
+
+    <span class="post-date">15 Jul 2018</span>
+
+    <p>In <a href="https://termlen0.github.io/2018/06/26/observations/">Part 1</a> of this 2 part series, I illustrated how to invoke the <code>command_parser</code> module using the <code>network-engine</code> role from Ansible. I then used it to illustrate how to build a simple parser, leveraging regex to convert unstructured device command output to structured data.</p>
+
+<p>In this post, I&#39;ll build on it, highlighting the command parser options that makes wrangling <em>any</em> complex device output into structured output. In particular this post will deep-dive into the following directives:</p>
+
+<ul>
+<li><code>pattern_group</code></li>
+<li><code>extend</code></li>
+</ul>
+
+<p><strong>The playbook and complete parser is available in <a href="https://github.com/termlen0/parser_demo">this git repo.</a></strong></p>
+
+    <a href="/2018/07/15/observations/"> Read more </a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2018/06/26/observations/">
         Part1 of a 2 part blog on using the Ansible network-engine's command parser
       </a>
@@ -121,9 +144,9 @@
 
     <h3>A very brief introduction</h3>
 
-<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands. Commands that network engineers know and love that are &quot;pretty&quot; formatted but not structured. </p>
+<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands - commands that network engineers know and love, that are &quot;pretty&quot; formatted but not structured. </p>
 
-<p>Until recently, I had only used <a href="https://github.com/google/textfsm">TextFSM</a> to do this. While TextFSM works, it has a significant learning curve. Last week I decided to give the <code>command_parser</code> module a spin and right off the bat my impressions were:</p>
+<p>Until recently, I had only used <a href="https://github.com/google/textfsm">TextFSM</a> to do this. While TextFSM works, it has a significant learning curve, IMO. Last week I decided to give the <code>command_parser</code> module a spin and right off the bat my impressions were:</p>
 
 <ol>
 <li><p>If you are already comfortable using Ansible, you will feel at home working with the command parser</p></li>
@@ -212,32 +235,6 @@ I adapted for Linux. The concept is as follows:</p>
 </ol>
 
     <a href="/2017/04/20/observations/"> Read more </a>
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2017/04/12/observations/">
-        Test Driven Development (TDD) for networks,  using Ansible
-      </a>
-    </h1>
-
-    <span class="post-date">12 Apr 2017</span>
-
-    <p>In it&#39;s most basic form, TDD works as follows:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>1. Envision the outcome of what you are developing [ Adding a VLAN
-   to a switch ]
-2. Write a test to validate that outcome [ Is the desired VLAN on
-   the switch ]
-3. Run the playbook, to invoke the test [ it will fail - RED test
-   ]
-4. Refactor your code [ write the roles/tasks needed for the tests
-   to pass ]
-5. Re-run tests [role] to ensure that they now pass
-</code></pre></div>
-<p>In this post, I hope to share my observations on how I used ansible to
-implement this using roles. I start with known facts/assumptions:</p>
-
-    <a href="/2017/04/12/observations/"> Read more </a>
   </div>
   
 </div>
