@@ -129,7 +129,7 @@ The full source code for this demo is available within the [ network-engine-role
 
 The introduction of the Ansible network-engine and the push towards creating "network function" roles makes the end user - the network SME's life a lot easier. Installing tried and tested roles that address majority use cases will make writing network automation playbooks a breeze. This will enable the adoption of netDevOps like never before.
 
-While the roles themselves might be complex to write, keep the end user in mind. As a network engineer do I really care whether `YAML` is or is not a programming language? Does it matter if logic and loops are implemented in the construction of roles? As an end-user if I can get  **supported**, best-practices based roles that make my life easier and allows me to focus on higher value outcomes for my business, I'd rather leave the debate to the pedantic and get stuff done.
+While the roles themselves might be complex to write, keep the end user in mind. As a network engineer do I really care whether `YAML` is or is not a programming language? Does it matter if logic and loops are implemented in the construction of roles? As an end-user if I can get  **supported**, best-practices based roles that make my life easier and allows me to focus on higher value outcomes for my business, I'd rather leave the debate to the pedantic folks out there and get stuff done.
 
 > BTW, you can install a working copy of the role in this example as follows:
 
