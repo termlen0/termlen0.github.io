@@ -112,6 +112,35 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2017/04/20/observations/">
+        OT - A quick post on using gpg to manage github in Linux
+      </a>
+    </h1>
+
+    <span class="post-date">20 Apr 2017</span>
+
+    <p>After being used to OSX Keychains in my old mac, I wanted a similar
+functionality on my Linux laptop. Being prompted each time to login,
+while interacting with <a href="https://github.com">github</a> for instance was
+annoying. Searching the web, led me to
+<a href="https://git-scm.com/docs/git-credential-store">git-credential-store</a>.
+I was not too happy with the fact that credentials would be stored in
+clear text, locally, indefinitely. I came across this stackoverflow
+<a href="http://stackoverflow.com/questions/5343068/is-there-a-way-to-skip-password-typing-when-using-https-on-github/18362082#18362082">post</a> that
+I adapted for Linux. The concept is as follows:</p>
+
+<ol>
+<li>Use a .netrc file to store your credentials. This follows the
+  file format for <a href="https://www.ibm.com/support/knowledgecenter/SSB27U_6.2.0/com.ibm.zvm.v620.kijl0/netrcd.htm#netrcd">netrc</a></li>
+<li>Encrypt this file,
+  using <a href="https://www.gnupg.org/">GNU Privacy Guard</a></li>
+</ol>
+
+    <a href="/2017/04/20/observations/"> Read more </a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2017/04/12/observations/">
         Test Driven Development (TDD) for networks,  using Ansible
       </a>

@@ -4,13 +4,139 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2018-07-15T17:54:06-04:00</updated>
+ <updated>2018-07-30T12:03:23-04:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>Using Ansible network-engine to simplify network automation tasks</title>
+   <link href="http://localhost:4000/2018/07/30/observations/"/>
+   <updated>2018-07-30T00:00:00-04:00</updated>
+   <id>http://localhost:4000/2018/07/30/observations</id>
+   <content type="html">&lt;p&gt;Last week at Networking field day (&lt;a href=&quot;http://techfieldday.com/event/nfd18/&quot;&gt;NFD18&lt;/a&gt;), Peter Sprygada (&lt;a href=&quot;https://twitter.com/privateip&quot;&gt;@privateip&lt;/a&gt;) gave a fantastic presentation about the problems in network automation and new initiatives from Ansible to help network and automation engineers. &lt;/p&gt;
+
+&lt;p&gt;In short - network automation teams are recreating similar Ansible playbooks since most of us have similar problems to solve. For instance, adding an application to the datacenter will require creation of VLANS, extending them over port channels, creating STP priorities etc. The Ansible network-engine strives to provide pre-canned, opinionated (meaning best-practices) roles that will make automation easier to kick start and reuse across most teams.&lt;/p&gt;
+
+&lt;!--more--&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://youtu.be/9tP75pfiZV0?t=14m55s&quot;&gt;In this section of the video&lt;/a&gt;, Peter dives into the layout of the network-engine role and how it allows the creation of &amp;quot;network functions&amp;quot; ( &lt;em&gt;BTW, I highly recommend watching the entire video&lt;/em&gt; ). &lt;/p&gt;
+
+&lt;p&gt;In this blog post, I am hoping to illustrate the idea of network functions through an example. The NFD18 presentation also seemed to raise questions/concerns about Ansible&amp;#39;s approach, potentially causing it to move away from being a simple automation tool, to becoming a complex one - like a programming language. This was interesting feedback to me. I hope to illustrate that, in contrast, the approach actually makes writing playbooks extremely easy for network engineers through this post. As always, I welcome your feedback/disagreements.&lt;/p&gt;
+
+&lt;h3&gt;An illustrative use case&lt;/h3&gt;
+
+&lt;p&gt;As network engineers how many times have we dealt with a ticket/request that reads: &lt;strong&gt;&amp;quot;My super important application needs to talk to the database on port 5555. Make this happen!&amp;quot;&lt;/strong&gt;. Well, maybe it is worded a lot more politely.....maybe. This might require of us to crawl through hundreds of devices to validate existing ACLs, to ensure whether that the traffic is already being allowed.&lt;/p&gt;
+
+&lt;p&gt;What if we had a &amp;quot;network function&amp;quot; that did this for us? Given the source/destination tuple, this &amp;quot;function&amp;quot; would return all matched ACLs within the infrastructure. &lt;/p&gt;
+
+&lt;h3&gt;Persona based automation development&lt;/h3&gt;
+
+&lt;p&gt;In my opinion, one of the main reason for the popularity of Ansible for network automation, has been it&amp;#39;s simplicity and easy of use. A network engineer can write a playbook using a &lt;code&gt;YAML&lt;/code&gt; file that is very readable (and easily re-callable 6 months after writing it) to manage configuration or use operational state data.&lt;/p&gt;
+
+&lt;p&gt;For our present use case, say something like this:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;CHECK FOR ACL THAT MATCHES RULE&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;hosts&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;all&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;connection&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;network_cli&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;gather_facts&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;no&lt;/span&gt;
+
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;tasks&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;include_role&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;ios_check_acls&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;vars&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;protocol&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;#39;udp&amp;#39;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;action&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;#39;permit&amp;#39;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;src_network&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;#39;10.100.100.2&amp;#39;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;src_mask&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;#39;255.255.255.255&amp;#39;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;dst_network&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;#39;3.0.0.128&amp;#39;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;dst_mask&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;#39;255.255.255.128&amp;#39;&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;dst_port&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;#39;2222&amp;#39;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;As a subject matter expert of the underlying network infrastructure, this playbook is easy to read and I should be able to run this against all my devices to get an output that looks like :&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span&gt;&lt;/span&gt;TASK &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;ios_check_acls : DISPLAY MATCH&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; ***************************************************************************************************************************************
+ok: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;rtr1&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&amp;gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&amp;quot;output.result&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;ace_action&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;permit&amp;quot;&lt;/span&gt;,
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;ace_name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;PERMIT-ALL&amp;quot;&lt;/span&gt;,
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;ace_number&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;10&amp;quot;&lt;/span&gt;,
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;rule_match&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;any -&amp;gt; any:&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+ok: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;rtr2&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&amp;gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&amp;quot;output.result&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;No match found&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+ok: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;rtr3&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&amp;gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&amp;quot;output.result&amp;quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;ace_action&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;permit&amp;quot;&lt;/span&gt;,
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;ace_name&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;TESTER&amp;quot;&lt;/span&gt;,
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;ace_number&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;10&amp;quot;&lt;/span&gt;,
+            &lt;span class=&quot;s2&quot;&gt;&amp;quot;rule_match&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;10.100.100.0 0.0.0.127 -&amp;gt; 3.0.0.0 0.255.255.255:&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+ok: &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;rtr4&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&amp;gt; &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;s2&quot;&gt;&amp;quot;output.result&amp;quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&amp;quot;No match found&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Note how there is no match found on routers &lt;strong&gt;rtr2&lt;/strong&gt; and &lt;strong&gt;rtr4&lt;/strong&gt;. Also note how more permissive ACLs are accounted for.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;This is precisely what the Ansible &lt;code&gt;network-engine&lt;/code&gt; role enables. Let&amp;#39;s break down this playbook to understand what is happening here - a &amp;#39;who does what&amp;#39; visual:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/playbook_flow.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;The playbook is simple and is written by the network SME. This playbook is uncomplicated, easy to read and revisit.&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;ios_check_acls&lt;/code&gt;  is a &amp;quot;network function&amp;quot; role and is written by advanced Ansible developers (possibly value added re-sellers, vendors, independent community developers etc). &lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;ios_check_acls&lt;/code&gt; calls a &amp;quot;provider&amp;quot; role - &lt;code&gt;ios&lt;/code&gt;. This role is written by advanced Ansible developers and potentially functions as an abstraction layer for Cisco IOS device commands, like parsing command output, loading declarative configuration etc. This abstraction allows role developers to use core modules from within Ansible to build opinionated automation tasks&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;ios&lt;/code&gt; role calls the &amp;quot;network-engine&amp;quot; role which provides core functionality like command parsing.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3&gt;A deeper dive into the roles&lt;/h3&gt;
+
+&lt;p&gt;The directory structure of the resulting playbook looks as follows:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/dir_layout.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;check_access.yaml&lt;/code&gt; is the playbook written by the network SME. &lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Keep in mind that the network SME has simply downloaded the necessary role from &lt;a href=&quot;https://galaxy.ansible.com&quot;&gt;&amp;#39;ansible-galaxy&amp;#39;&lt;/a&gt; into that &lt;code&gt;roles&lt;/code&gt; directory. The dependency definitions within the role will automatically install all the other roles needed, freeing the user from having to worry about installing them.&lt;/p&gt;
+
+&lt;p&gt;What does this network function role look like?&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/role_dir.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;This should look familiar. The role has been implemented using custom modules, templates and a tasks. Herein lies the advantage of using this construct - module developers, vendors, value added re-sellers and other community contributors are now easily able to push opinionated roles into Ansible galaxy, building up on existing provider roles. This makes pushing out custom modules a lot faster as well.&lt;/p&gt;
+
+&lt;p&gt;The full source code for this demo is available within the &lt;a href=&quot;https://github.com/termlen0/network-engine-roledemo&quot;&gt; network-engine-roledemo github repo&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3&gt;Conclusion&lt;/h3&gt;
+
+&lt;p&gt;The introduction of the Ansible network-engine and the push towards creating &amp;quot;network function&amp;quot; roles makes the end user - the network SME&amp;#39;s life a lot easier. Installing tried and tested roles that address majority use cases will make writing network automation playbooks a breeze. This will enable the adoption of netDevOps like never before.&lt;/p&gt;
+
+&lt;p&gt;While the roles themselves might be complex to write, keep the end user in mind. As a network engineer do I really care whether &lt;code&gt;YAML&lt;/code&gt; is or is not a programming language? Does it matter if logic and loops are implemented in the construction of roles? As an end-user if I can get  &lt;strong&gt;supported&lt;/strong&gt;, best-practices based roles that make my life easier and allows me to focus on higher value outcomes for my business, I&amp;#39;d rather leave the debate to the pedantic and get stuff done.&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;BTW, you can install a working copy of the role in this example as follows:&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span&gt;&lt;/span&gt;ansible-galaxy install termlen0.ios_check_acls 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;There really is no easy button but Ansible network-engine and network function roles make it one step easier for the folks in the trenches.&lt;/p&gt;
+
+&lt;p&gt;As always, I&amp;#39;d love to hear your thoughts and opinions about this direction. What do you think?&lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Part2 of a 2 part blog on using the Ansible network-engine's command parser</title>

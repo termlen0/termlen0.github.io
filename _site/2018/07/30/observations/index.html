@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      Using Ansible network-engine to simplify network automation tasks &middot; Network Automation
+    
+  </title>
+
+  <!-- CSS -->
+  <!-- <link rel="stylesheet" href="/public/css/poole.css"> -->
+  <!-- <link rel="stylesheet" href="/public/css/syntax.css"> -->
+  <!-- <link rel="stylesheet" href="/public/css/hyde.css"> -->
+  <!-- <link rel="stylesheet" -->
+
+<link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet"  href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+                                 <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+</head>
+
+  <h3 class="masthead-title">
+    <a href="/" title="Home">Network Automation</a>
+
+    
+    &nbsp;&nbsp;&nbsp;
+    <small><a href="/archive">Archive</a></small>
+    
+  </h3>
+  <body class="theme-base-08">
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1>
+        <a href="/">
+          Network Automation
+        </a>
+      </h1>
+      <p class="lead">Observations in network automation<br /> <a href="https://twitter.com/termlen0" target="_blank">@termlen0</a></p>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item" href="/">Home</a>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/about/">About</a>
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/acrhive/">Archive</a>
+          
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+          
+        
+      
+
+            <a class="sidebar-nav-item" href="https://github.com/termlen0">GitHub project</a>
+
+            <a href="https://twitter.com/termlen0"> <i class="fa fa-twitter"></i> </a>
+            <a href="https://github.com/termlen0"> <i class="fa fa-github"></i> </a>
+            
+            <a href="https://linkedin.com/in/achenampara"> <i class="fa fa-linkedin"></i> </a>
+
+    
+    </nav>
+    
+    <p>&copy; 2018. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Using Ansible network-engine to simplify network automation tasks</h1>
+  <span class="post-date">30 Jul 2018</span>
+  <p>Last week at Networking field day (<a href="http://techfieldday.com/event/nfd18/">NFD18</a>), Peter Sprygada (<a href="https://twitter.com/privateip">@privateip</a>) gave a fantastic presentation about the problems in network automation and new initiatives from Ansible to help network and automation engineers. </p>
+
+<p>In short - network automation teams are recreating similar Ansible playbooks since most of us have similar problems to solve. For instance, adding an application to the datacenter will require creation of VLANS, extending them over port channels, creating STP priorities etc. The Ansible network-engine strives to provide pre-canned, opinionated (meaning best-practices) roles that will make automation easier to kick start and reuse across most teams.</p>
+
+<!--more-->
+
+<p><a href="https://youtu.be/9tP75pfiZV0?t=14m55s">In this section of the video</a>, Peter dives into the layout of the network-engine role and how it allows the creation of &quot;network functions&quot; ( <em>BTW, I highly recommend watching the entire video</em> ). </p>
+
+<p>In this blog post, I am hoping to illustrate the idea of network functions through an example. The NFD18 presentation also seemed to raise questions/concerns about Ansible&#39;s approach, potentially causing it to move away from being a simple automation tool, to becoming a complex one - like a programming language. This was interesting feedback to me. I hope to illustrate that, in contrast, the approach actually makes writing playbooks extremely easy for network engineers through this post. As always, I welcome your feedback/disagreements.</p>
+
+<h3>An illustrative use case</h3>
+
+<p>As network engineers how many times have we dealt with a ticket/request that reads: <strong>&quot;My super important application needs to talk to the database on port 5555. Make this happen!&quot;</strong>. Well, maybe it is worded a lot more politely.....maybe. This might require of us to crawl through hundreds of devices to validate existing ACLs, to ensure whether that the traffic is already being allowed.</p>
+
+<p>What if we had a &quot;network function&quot; that did this for us? Given the source/destination tuple, this &quot;function&quot; would return all matched ACLs within the infrastructure. </p>
+
+<h3>Persona based automation development</h3>
+
+<p>In my opinion, one of the main reason for the popularity of Ansible for network automation, has been it&#39;s simplicity and easy of use. A network engineer can write a playbook using a <code>YAML</code> file that is very readable (and easily re-callable 6 months after writing it) to manage configuration or use operational state data.</p>
+
+<p>For our present use case, say something like this:</p>
+<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="nn">---</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">CHECK FOR ACL THAT MATCHES RULE</span>
+  <span class="l l-Scalar l-Scalar-Plain">hosts</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">all</span>
+  <span class="l l-Scalar l-Scalar-Plain">connection</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">network_cli</span>
+  <span class="l l-Scalar l-Scalar-Plain">gather_facts</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+
+  <span class="l l-Scalar l-Scalar-Plain">tasks</span><span class="p p-Indicator">:</span>
+
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">include_role</span><span class="p p-Indicator">:</span>
+        <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ios_check_acls</span>
+      <span class="l l-Scalar l-Scalar-Plain">vars</span><span class="p p-Indicator">:</span>
+        <span class="l l-Scalar l-Scalar-Plain">protocol</span><span class="p p-Indicator">:</span> <span class="s">&#39;udp&#39;</span>
+        <span class="l l-Scalar l-Scalar-Plain">action</span><span class="p p-Indicator">:</span> <span class="s">&#39;permit&#39;</span>
+        <span class="l l-Scalar l-Scalar-Plain">src_network</span><span class="p p-Indicator">:</span> <span class="s">&#39;10.100.100.2&#39;</span>
+        <span class="l l-Scalar l-Scalar-Plain">src_mask</span><span class="p p-Indicator">:</span> <span class="s">&#39;255.255.255.255&#39;</span>
+        <span class="l l-Scalar l-Scalar-Plain">dst_network</span><span class="p p-Indicator">:</span> <span class="s">&#39;3.0.0.128&#39;</span>
+        <span class="l l-Scalar l-Scalar-Plain">dst_mask</span><span class="p p-Indicator">:</span> <span class="s">&#39;255.255.255.128&#39;</span>
+        <span class="l l-Scalar l-Scalar-Plain">dst_port</span><span class="p p-Indicator">:</span> <span class="s">&#39;2222&#39;</span>
+</code></pre></div>
+<p>As a subject matter expert of the underlying network infrastructure, this playbook is easy to read and I should be able to run this against all my devices to get an output that looks like :</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span></span>TASK <span class="o">[</span>ios_check_acls : DISPLAY MATCH<span class="o">]</span> ***************************************************************************************************************************************
+ok: <span class="o">[</span>rtr1<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
+    <span class="s2">&quot;output.result&quot;</span>: <span class="o">[</span>
+        <span class="o">{</span>
+            <span class="s2">&quot;ace_action&quot;</span>: <span class="s2">&quot;permit&quot;</span>,
+            <span class="s2">&quot;ace_name&quot;</span>: <span class="s2">&quot;PERMIT-ALL&quot;</span>,
+            <span class="s2">&quot;ace_number&quot;</span>: <span class="s2">&quot;10&quot;</span>,
+            <span class="s2">&quot;rule_match&quot;</span>: <span class="s2">&quot;any -&gt; any:&quot;</span>
+        <span class="o">}</span>
+    <span class="o">]</span>
+<span class="o">}</span>
+ok: <span class="o">[</span>rtr2<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
+    <span class="s2">&quot;output.result&quot;</span>: <span class="s2">&quot;No match found&quot;</span>
+<span class="o">}</span>
+ok: <span class="o">[</span>rtr3<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
+    <span class="s2">&quot;output.result&quot;</span>: <span class="o">[</span>
+        <span class="o">{</span>
+            <span class="s2">&quot;ace_action&quot;</span>: <span class="s2">&quot;permit&quot;</span>,
+            <span class="s2">&quot;ace_name&quot;</span>: <span class="s2">&quot;TESTER&quot;</span>,
+            <span class="s2">&quot;ace_number&quot;</span>: <span class="s2">&quot;10&quot;</span>,
+            <span class="s2">&quot;rule_match&quot;</span>: <span class="s2">&quot;10.100.100.0 0.0.0.127 -&gt; 3.0.0.0 0.255.255.255:&quot;</span>
+        <span class="o">}</span>
+    <span class="o">]</span>
+<span class="o">}</span>
+ok: <span class="o">[</span>rtr4<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
+    <span class="s2">&quot;output.result&quot;</span>: <span class="s2">&quot;No match found&quot;</span>
+<span class="o">}</span>
+</code></pre></div>
+<blockquote>
+<p>Note how there is no match found on routers <strong>rtr2</strong> and <strong>rtr4</strong>. Also note how more permissive ACLs are accounted for.</p>
+</blockquote>
+
+<p>This is precisely what the Ansible <code>network-engine</code> role enables. Let&#39;s break down this playbook to understand what is happening here - a &#39;who does what&#39; visual:</p>
+
+<p><img src="/assets/playbook_flow.png" alt=""></p>
+
+<ul>
+<li>The playbook is simple and is written by the network SME. This playbook is uncomplicated, easy to read and revisit.</li>
+<li>The <code>ios_check_acls</code>  is a &quot;network function&quot; role and is written by advanced Ansible developers (possibly value added re-sellers, vendors, independent community developers etc). </li>
+<li>The <code>ios_check_acls</code> calls a &quot;provider&quot; role - <code>ios</code>. This role is written by advanced Ansible developers and potentially functions as an abstraction layer for Cisco IOS device commands, like parsing command output, loading declarative configuration etc. This abstraction allows role developers to use core modules from within Ansible to build opinionated automation tasks</li>
+<li>The <code>ios</code> role calls the &quot;network-engine&quot; role which provides core functionality like command parsing.</li>
+</ul>
+
+<h3>A deeper dive into the roles</h3>
+
+<p>The directory structure of the resulting playbook looks as follows:</p>
+
+<p><img src="/assets/dir_layout.png" alt=""></p>
+
+<blockquote>
+<p><code>check_access.yaml</code> is the playbook written by the network SME. </p>
+</blockquote>
+
+<p>Keep in mind that the network SME has simply downloaded the necessary role from <a href="https://galaxy.ansible.com">&#39;ansible-galaxy&#39;</a> into that <code>roles</code> directory. The dependency definitions within the role will automatically install all the other roles needed, freeing the user from having to worry about installing them.</p>
+
+<p>What does this network function role look like?</p>
+
+<p><img src="/assets/role_dir.png" alt=""></p>
+
+<p>This should look familiar. The role has been implemented using custom modules, templates and a tasks. Herein lies the advantage of using this construct - module developers, vendors, value added re-sellers and other community contributors are now easily able to push opinionated roles into Ansible galaxy, building up on existing provider roles. This makes pushing out custom modules a lot faster as well.</p>
+
+<p>The full source code for this demo is available within the <a href="https://github.com/termlen0/network-engine-roledemo"> network-engine-roledemo github repo</a>.</p>
+
+<h3>Conclusion</h3>
+
+<p>The introduction of the Ansible network-engine and the push towards creating &quot;network function&quot; roles makes the end user - the network SME&#39;s life a lot easier. Installing tried and tested roles that address majority use cases will make writing network automation playbooks a breeze. This will enable the adoption of netDevOps like never before.</p>
+
+<p>While the roles themselves might be complex to write, keep the end user in mind. As a network engineer do I really care whether <code>YAML</code> is or is not a programming language? Does it matter if logic and loops are implemented in the construction of roles? As an end-user if I can get  <strong>supported</strong>, best-practices based roles that make my life easier and allows me to focus on higher value outcomes for my business, I&#39;d rather leave the debate to the pedantic and get stuff done.</p>
+
+<blockquote>
+<p>BTW, you can install a working copy of the role in this example as follows:</p>
+</blockquote>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span></span>ansible-galaxy install termlen0.ios_check_acls 
+</code></pre></div>
+<p>There really is no easy button but Ansible network-engine and network function roles make it one step easier for the folks in the trenches.</p>
+
+<p>As always, I&#39;d love to hear your thoughts and opinions about this direction. What do you think?</p>
+
+</div>
+<a href="https://twitter.com/share" class="twitter-share-button"
+data-via="termlen0">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2018/07/15/observations/">
+            Part2 of a 2 part blog on using the Ansible network-engine's command parser
+            <small>15 Jul 2018</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/2018/06/26/observations/">
+            Part1 of a 2 part blog on using the Ansible network-engine's command parser
+            <small>26 Jun 2018</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/2018/03/19/observations/">
+            Please reverse mentor your managers
+            <small>19 Mar 2018</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+      
+<!-- Add Disqus comments. -->
+<div id="disqus_thread"></div>
+<script>
+
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//https-termlen0-github-io.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+                                
+
+    </div>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-121410364-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-121410364-1');
+</script>
+
+
+  </body>
+</html>
