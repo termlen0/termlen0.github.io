@@ -91,6 +91,10 @@
           
         
       
+        
+          
+        
+      
 
             <a class="sidebar-nav-item" href="https://github.com/termlen0">GitHub project</a>
 
@@ -102,13 +106,39 @@
     
     </nav>
     
-    <p>&copy; 2018. All rights reserved.</p>
+    <p>&copy; 2019. All rights reserved.</p>
   </div>
 </div>
 
 
     <div class="content container">
       <div class="posts">
+  
+  <div class="post">
+    <h1 class="post-title">
+      <a href="/2017/07/15/observations/">
+        NETCONF Ain't YANG
+      </a>
+    </h1>
+
+    <span class="post-date">15 Jul 2017</span>
+
+    <p>Obvious!</p>
+
+<p>Recently I was working on  YANG device models, using NETCONF to
+interact with the actual device (NXOS 7.0.3.I6.1). I was using
+Cisco&#39;s
+<a href="http://www.cisco.com/c/en/us/td/docs/switches/datacenter/nexus9000/sw/7-x/programmability/guide/b_Cisco_Nexus_9000_Series_NX-OS_Programmability_Guide_7x/b_Cisco_Nexus_9000_Series_NX-OS_Programmability_Guide_7x_chapter_010100.html">NX-OS Programmability Guide</a> for
+the 7.x version. I have had previous experience working with
+YANG and Cisco&#39;s NEDs through the tail-f/NSO product and was feeling
+quite confident in my understanding of how YANG is being used for
+modeling (Either a service or a device) and how NETCONF was one of the
+protocols used to interact with the model. 
+However, I was getting lost trying to navigate the NXOS&#39;s YANG model
+over the NETCONF client. </p>
+
+    <a href="/2017/07/15/observations/"> Read more </a>
+  </div>
   
   <div class="post">
     <h1 class="post-title">
@@ -214,39 +244,11 @@ integers; a source of truth, that knows what numeric value was last</p>
     <a href="/2016/12/28/observations/"> Read more </a>
   </div>
   
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2016/12/16/observations/">
-        Running ansible at scale
-      </a>
-    </h1>
-
-    <span class="post-date">16 Dec 2016</span>
-
-    <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
-Like most things though, the devil is in the details. Right off the bat, I ran into &quot;non-ansible&quot; related issues (tacacs/ssh).
-That brought the number of devices to about 270. Not a big number right?
-At the most basic level, yes, if I was simply pushing configs using the ios_config
-module.</p>
-
-<h2>Breakdown of the playbook</h2>
-
-<ol>
-<li>Execute a show run on the device and compile a local backup for each device</li>
-<li>Run a pre-flight report, specific to the interfaces we are going to impact (multiple ssh sessions per host)</li>
-<li>Build the configs locally</li>
-<li>Deploy the configs</li>
-<li>Validate the configs/Unit testing</li>
-</ol>
-
-    <a href="/2016/12/16/observations/"> Read more </a>
-  </div>
-  
 </div>
 
 <div class="pagination">
   
-    <span class="pagination-item older">Older</span>
+    <a class="pagination-item older" href="/page3">Older</a>
   
   
     

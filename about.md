@@ -22,7 +22,7 @@ around the world.
 
 ###Some ways to get a hold of me
 * [Twitter](https://twitter.com/termlen0)
-* [Linkedin](https://linkedin.com/in/achenampara)
+* [Linkedin](https://linkedin.com/in/termlen0)
 
 ###My repo
  [GitHub](https://github.com/termlen0).

@@ -4,13 +4,176 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2018-07-30T12:37:44-04:00</updated>
+ <updated>2019-06-08T08:09:21-04:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
    <email></email>
  </author>
 
+ 
+ <entry>
+   <title>Custom credentials in Ansible Tower to store Github private keys</title>
+   <link href="http://localhost:4000/2019/06/08/observations/"/>
+   <updated>2019-06-08T00:00:00-04:00</updated>
+   <id>http://localhost:4000/2019/06/08/observations</id>
+   <content type="html">&lt;p&gt;This post shows you how to add a custom credential in Ansible Tower, that stores SSH private keys. I won&amp;#39;t dive into what custom credentials are and how to get started with them because it is brilliantly covered in this &amp;quot;Inside Playbook&amp;quot; https://www.ansible.com/blog/ansible-Tower-feature-spotlight-custom-credentials by &lt;a href=&quot;https://twitter.com/bill_nottingham&quot;&gt;@bill_nottingham&lt;/a&gt;
+&amp;lt;!--more--&amp;gt;&lt;/p&gt;
+
+&lt;h3&gt;My use case&lt;/h3&gt;
+
+&lt;p&gt;One of the roles in my playbook involves cloning a private git repo. For this, I use the Ansible &lt;a href=&quot;https://docs.ansible.com/ansible/latest/modules/git_module.html&quot;&gt;git &lt;/a&gt; module. Since this is a private repo, I cannot use the &lt;strong&gt;https&lt;/strong&gt; URL, since doing so, my playbook will always require human input. Running the following playbook:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;DEMO AN INTERACTIVE PRIVATE KEY&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;hosts&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;localhost&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;gather_facts&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;no&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;tasks&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;CLONE THE GIT REPO&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;git&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;repo&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;https://github.com/termlen0/test_repo.git&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;dest&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;/tmp/my_test_repo&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;...will result in the following output:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;ec2-user@ip-10-0-0-194 tmp&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;$ ansible-playbook demo_interactive_private_key.yml 
+ &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;WARNING&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not
+match &lt;span class=&quot;s1&quot;&gt;&amp;#39;all&amp;#39;&lt;/span&gt;
+
+
+PLAY &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;DEMO AN INTERACTIVE PRIVATE KEY&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; *****************************************************************************
+
+TASK &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;CLONE THE GIT REPO&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt; ******************************************************************************************
+Username &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;https://github.com&amp;#39;&lt;/span&gt;: 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;...where the playbook is waiting on my interactive response&lt;/p&gt;
+
+&lt;h3&gt;Solving using a SSH key pair&lt;/h3&gt;
+
+&lt;p&gt;This situation is easily remedied by switching from the &lt;strong&gt;https&lt;/strong&gt; to a &lt;strong&gt;ssh&lt;/strong&gt; url and then using the SSH key pair registered with github.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;DEMO AN INTERACTIVE PRIVATE KEY&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;hosts&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;localhost&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;gather_facts&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;no&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;tasks&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;CLONE THE GIT REPO&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;git&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;repo&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;git@github.com:termlen0/test_repo.git&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;dest&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;/tmp/my_test_repo&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;key_file&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;./my_private_key&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h3&gt;Moving this solution to Ansible Tower&lt;/h3&gt;
+
+&lt;p&gt;To move this playbook to my central Tower server, I need to take a different approach because I don&amp;#39;t want my private key to be on the Tower file system. 
+One option is to define a custom credential and supply my private key through this credential. Custom credentials come in handy when you want to inject sensitive data as extra vars or environment variables into your playbook (exhaustive details &lt;a href=&quot;https://docs.ansible.com/ansible-Tower/latest/html/userguide/credential_types.html&quot;&gt;here&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;Let&amp;#39;s dive right into it. The work flow I use is as follows:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&lt;span&gt;&lt;/span&gt;1. First we create a new credential type
+
+2. Then, add new credential(s) using this custom credential 
+
+3. Invoke the credential from the job template
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h4&gt;1. Create a new credential type&lt;/h4&gt;
+
+&lt;p&gt;As a Tower admin, you can create a custom credential by clicking on &lt;em&gt;ADMINISTRATION&amp;gt; Credential Types&lt;/em&gt; &lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/custom_cred1.png&quot;&gt;&lt;img src=&quot;/assets/custom_cred1.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Here, I&amp;#39;ve created a new credential type and I&amp;#39;ve named it &lt;strong&gt;PRIVATE KEY CRED&lt;/strong&gt;. Custom credentials are defined using 2 components :&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&lt;span&gt;&lt;/span&gt;1. Input Configuration
+
+2. Injector Configuration
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Simply put, the input configuration is where you will define the characteristics/attributes of the custom credential you are defining. In my case:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;fields&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;my_private_key&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;string&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;label&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;private_key&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;secret&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;true&lt;/span&gt;
+    &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;multiline&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;true&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The &lt;code&gt;secret: true&lt;/code&gt; will make sure that the data stored in this credential will be encrypted at rest and &lt;code&gt;multiline: true&lt;/code&gt; will accommodate for private keys, which typically contain multiple lines.&lt;/p&gt;
+
+&lt;p&gt;The &lt;em&gt;Injector Configuration&lt;/em&gt; section, is how the data contained in the custom credential will be &lt;strong&gt;injected&lt;/strong&gt; into our playbook. Let&amp;#39;s break this down for my example:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;template.my_key&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;my_private_key&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;extra_vars&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;secret_key&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;tower.filename.my_key&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The &lt;code&gt;file&lt;/code&gt; parameter tells us that the string data of the &lt;code&gt;my_private_key&lt;/code&gt; custom credential id will be stored as a temporary file. The &lt;code&gt;template.my_key&lt;/code&gt; is how Tower will reference this file, using the identifier &lt;code&gt;my_key&lt;/code&gt;. So now, at this point the data collected from the input field is going to be stored as a temporary file that Tower can reference using &lt;code&gt;my_key&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The next part is &lt;code&gt;extra_vars&lt;/code&gt;. Here, I am configuring the injector to pass the data into the playbook as an extra var. The extra var name is  &lt;code&gt;secret_key&lt;/code&gt; and the value of this variable will be the temporary file referenced by Tower as &lt;code&gt;my_key&lt;/code&gt;. This will be clear further down when we debug this variable within our playbook.&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;In other words &lt;em&gt;tower.filename&lt;/em&gt; is not user defined, whereas &lt;em&gt;my_key&lt;/em&gt; is.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Ok, now onto using this brand new custom credential that we just created!&lt;/p&gt;
+
+&lt;h4&gt;2. Add new credentials&lt;/h4&gt;
+
+&lt;p&gt;This step should look familiar to Tower/AWX users. Create a new credential by choosing the &lt;em&gt;RESOURCES &amp;gt; Credentials&lt;/em&gt; option from the sidebar:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/custom_cred2.png&quot;&gt;&lt;img src=&quot;/assets/custom_cred2.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;After saving the private key is encrypted and stored securely on Tower. &lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Repeat this step for as many users as needed that will be using the github repo.&lt;/p&gt;
+
+&lt;h4&gt;3. Invoke the custom credential from the job template&lt;/h4&gt;
+
+&lt;p&gt;This step is where it all comes together. So first, let&amp;#39;s update our playbook so that we can take advantage of the custom credential that&amp;#39;s being injected as an &lt;em&gt;extra var&lt;/em&gt;:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;---&lt;/span&gt;
+&lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;DEMO AN INTERACTIVE PRIVATE KEY&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;hosts&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;localhost&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;gather_facts&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;no&lt;/span&gt;
+  &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;tasks&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;DISPLAY THE INJECTED EXTRA VAR&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;debug&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;var&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;secret_key&lt;/span&gt;
+
+    &lt;span class=&quot;p p-Indicator&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;CLONE THE GIT REPO&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;git&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;repo&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;git@github.com:termlen0/test_repo.git&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;dest&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;/tmp/my_test_repo&lt;/span&gt;
+        &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;key_file&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&amp;quot;{{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;secret_key&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;  &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;}}&amp;quot;&lt;/span&gt;
+      &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;delegate_to&lt;/span&gt;&lt;span class=&quot;p p-Indicator&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;l l-Scalar l-Scalar-Plain&quot;&gt;localhost&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Recall that in step 1, we are injecting the private key as a variable named &lt;em&gt;secret_key&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Great, now let&amp;#39;s add a job template that ties this playbook and our custom credential together:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/custom_cred3.png&quot;&gt;&lt;img src=&quot;/assets/custom_cred3.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Note how I have the credential to be &lt;strong&gt;PROMPT ON LAUNCH&lt;/strong&gt;? For my use case, I&amp;#39;d like others in my org to be able to interact with this private github repo. Selecting the &lt;strong&gt;PROMPT ON LAUNCH&lt;/strong&gt; enables each individual to use their own private ssh key through the custom credentials we discussed above.&lt;/p&gt;
+
+&lt;p&gt;When I launch the template, I am prompted to choose a credential type. I choose the custom credential we created &lt;strong&gt;PRIVATE KEY CRED&lt;/strong&gt;. Which then lists the available private keys of this type.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/custom_cred4.png&quot;&gt;&lt;img src=&quot;/assets/custom_cred4.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Use the powerful Tower RBAC to restrict who can use which credentials. &lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Finally, launching the template results in the repo being cloned as expected:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;/assets/custom_cred5.png&quot;&gt;&lt;img src=&quot;/assets/custom_cred5.png&quot; alt=&quot;&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Note the contents of the &lt;strong&gt;secret_key&lt;/strong&gt; variable in the play output. It references the temporary file that the custom credential creates (and deletes after the play execution), containing my private key details.&lt;/p&gt;
+
+&lt;h3&gt;Conclusion&lt;/h3&gt;
+
+&lt;p&gt;Hopefully this post helps folks who are trying to figure out how to deal with SSH keys and Github connectivity. Please let me know if you have questions through the comments/social media. &lt;/p&gt;
+
+&lt;p&gt;If you have solved this in Tower using a different method, I&amp;#39;d love to hear how you did it as well. &lt;/p&gt;
+</content>
+ </entry>
  
  <entry>
    <title>Using Ansible network-engine to simplify network automation tasks</title>
