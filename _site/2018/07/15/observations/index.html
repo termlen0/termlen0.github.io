@@ -117,360 +117,389 @@
   <span class="post-date">15 Jul 2018</span>
   <p>In <a href="https://termlen0.github.io/2018/06/26/observations/">Part 1</a> of this 2 part series, I illustrated how to invoke the <code>command_parser</code> module using the <code>network-engine</code> role from Ansible. I then used it to illustrate how to build a simple parser, leveraging regex to convert unstructured device command output to structured data.</p>
 
-<p>In this post, I&#39;ll build on it, highlighting the command parser options that makes wrangling <em>any</em> complex device output into structured output. In particular this post will deep-dive into the following directives:</p>
+<p>In this post, I’ll build on it, highlighting the command parser options that makes wrangling <em>any</em> complex device output into structured output. In particular this post will deep-dive into the following directives:</p>
 
 <ul>
-<li><code>pattern_group</code></li>
-<li><code>extend</code></li>
+  <li><code>pattern_group</code></li>
+  <li><code>extend</code></li>
 </ul>
 
 <p><strong>The playbook and complete parser is available in <a href="https://github.com/termlen0/parser_demo">this git repo.</a></strong></p>
 
 <!--more-->
 
-<h3>Understanding the output pattern</h3>
+<h3 id="understanding-the-output-pattern">Understanding the output pattern</h3>
 
-<p>We used <code>pattern_match</code> in the last example to parse the output of the <code>show ip interface brief</code> command. </p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">MATCH PATTERN</span>
-  <span class="l l-Scalar l-Scalar-Plain">pattern_match</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">regex</span><span class="p p-Indicator">:</span> <span class="s">&quot;^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively</span><span class="nv"> </span><span class="s">down).*(up|down)&quot;</span>
-    <span class="l l-Scalar l-Scalar-Plain">match_all</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-  <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">section</span>
-</code></pre></div>
+<p>We used <code>pattern_match</code> in the last example to parse the output of the <code>show ip interface brief</code> command.</p>
+
+<pre><code class="language-yaml">- name: MATCH PATTERN
+  pattern_match:
+    regex: "^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively down).*(up|down)"
+    match_all: yes
+  register: section
+</code></pre>
+
 <p>Note that we used the <code>match_all</code> parameter to match each regex group. This worked well for matching against the following command output, because we were working with a single line at a time.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span></span>rtr1#sh ip int bri
+
+<pre><code class="language-bash">rtr1#sh ip int bri
 Interface              IP-Address      OK? Method Status                Protocol
-GigabitEthernet1       <span class="m">172</span>.16.230.103  YES DHCP   up                    up      
-Loopback0              <span class="m">192</span>.168.1.101   YES manual up                    up      
+GigabitEthernet1       172.16.230.103  YES DHCP   up                    up      
+Loopback0              192.168.1.101   YES manual up                    up      
 rtr1#
-</code></pre></div>
-<p>What if we wanted to loop over entire sections in the output? Let&#39;s illustrate using an example:</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span></span>rtr1#sh interfaces 
+</code></pre>
+
+<p>What if we wanted to loop over entire sections in the output? Let’s illustrate using an example:</p>
+
+<pre><code class="language-bash">rtr1#sh interfaces 
 GigabitEthernet1 is up, line protocol is up 
-  Hardware is CSR vNIC, address is 0e56.892c.0434 <span class="o">(</span>bia 0e56.892c.0434<span class="o">)</span>
-  Internet address is <span class="m">172</span>.16.230.103/16
-  MTU <span class="m">1500</span> bytes, BW <span class="m">1000000</span> Kbit/sec, DLY <span class="m">10</span> usec, 
-     reliability <span class="m">255</span>/255, txload <span class="m">1</span>/255, rxload <span class="m">1</span>/255
-  Encapsulation ARPA, loopback not <span class="nb">set</span>
-  Keepalive <span class="nb">set</span> <span class="o">(</span><span class="m">10</span> sec<span class="o">)</span>
-  Full Duplex, 1000Mbps, link <span class="nb">type</span> is auto, media <span class="nb">type</span> is Virtual
+  Hardware is CSR vNIC, address is 0e56.892c.0434 (bia 0e56.892c.0434)
+  Internet address is 172.16.230.103/16
+  MTU 1500 bytes, BW 1000000 Kbit/sec, DLY 10 usec, 
+     reliability 255/255, txload 1/255, rxload 1/255
+  Encapsulation ARPA, loopback not set
+  Keepalive set (10 sec)
+  Full Duplex, 1000Mbps, link type is auto, media type is Virtual
   output flow-control is unsupported, input flow-control is unsupported
-  ARP type: ARPA, ARP Timeout <span class="m">04</span>:00:00
-  Last input <span class="m">00</span>:00:00, output <span class="m">00</span>:00:00, output hang never
-  Last clearing of <span class="s2">&quot;show interface&quot;</span> counters never
-  Input queue: <span class="m">0</span>/375/0/0 <span class="o">(</span>size/max/drops/flushes<span class="o">)</span><span class="p">;</span> Total output drops: <span class="m">0</span>
+  ARP type: ARPA, ARP Timeout 04:00:00
+  Last input 00:00:00, output 00:00:00, output hang never
+  Last clearing of "show interface" counters never
+  Input queue: 0/375/0/0 (size/max/drops/flushes); Total output drops: 0
   Queueing strategy: fifo
-  Output queue: <span class="m">0</span>/40 <span class="o">(</span>size/max<span class="o">)</span>
-  <span class="m">5</span> minute input rate <span class="m">0</span> bits/sec, <span class="m">0</span> packets/sec
-  <span class="m">5</span> minute output rate <span class="m">1000</span> bits/sec, <span class="m">1</span> packets/sec
-     <span class="m">204069</span> packets input, <span class="m">21320843</span> bytes, <span class="m">0</span> no buffer
-     Received <span class="m">0</span> broadcasts <span class="o">(</span><span class="m">0</span> IP multicasts<span class="o">)</span>
-     <span class="m">0</span> runts, <span class="m">0</span> giants, <span class="m">0</span> throttles 
-     <span class="m">0</span> input errors, <span class="m">0</span> CRC, <span class="m">0</span> frame, <span class="m">0</span> overrun, <span class="m">0</span> ignored
-     <span class="m">0</span> watchdog, <span class="m">0</span> multicast, <span class="m">0</span> pause input
-     <span class="m">205563</span> packets output, <span class="m">26944541</span> bytes, <span class="m">0</span> underruns
-     <span class="m">0</span> output errors, <span class="m">0</span> collisions, <span class="m">1</span> interface resets
-     <span class="m">0</span> unknown protocol drops
-     <span class="m">0</span> babbles, <span class="m">0</span> late collision, <span class="m">0</span> deferred
-     <span class="m">0</span> lost carrier, <span class="m">0</span> no carrier, <span class="m">0</span> pause output
-     <span class="m">0</span> output buffer failures, <span class="m">0</span> output buffers swapped out
+  Output queue: 0/40 (size/max)
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 1000 bits/sec, 1 packets/sec
+     204069 packets input, 21320843 bytes, 0 no buffer
+     Received 0 broadcasts (0 IP multicasts)
+     0 runts, 0 giants, 0 throttles 
+     0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored
+     0 watchdog, 0 multicast, 0 pause input
+     205563 packets output, 26944541 bytes, 0 underruns
+     0 output errors, 0 collisions, 1 interface resets
+     0 unknown protocol drops
+     0 babbles, 0 late collision, 0 deferred
+     0 lost carrier, 0 no carrier, 0 pause output
+     0 output buffer failures, 0 output buffers swapped out
 Loopback0 is up, line protocol is up 
   Hardware is Loopback
-  Internet address is <span class="m">192</span>.168.1.101/24
-  MTU <span class="m">1514</span> bytes, BW <span class="m">8000000</span> Kbit/sec, DLY <span class="m">5000</span> usec, 
-     reliability <span class="m">255</span>/255, txload <span class="m">1</span>/255, rxload <span class="m">1</span>/255
-  Encapsulation LOOPBACK, loopback not <span class="nb">set</span>
-  Keepalive <span class="nb">set</span> <span class="o">(</span><span class="m">10</span> sec<span class="o">)</span>
+  Internet address is 192.168.1.101/24
+  MTU 1514 bytes, BW 8000000 Kbit/sec, DLY 5000 usec, 
+     reliability 255/255, txload 1/255, rxload 1/255
+  Encapsulation LOOPBACK, loopback not set
+  Keepalive set (10 sec)
   Last input never, output never, output hang never
-  Last clearing of <span class="s2">&quot;show interface&quot;</span> counters never
+  Last clearing of "show interface" counters never
 .
 .
 .
 .
 .
-&lt;output omitted <span class="k">for</span> brevity&gt;
-</code></pre></div>
-<p>The <code>show interfaces</code> command displays a wealth of information per interface. Let&#39;s say we want to capture the following information:</p>
+&lt;output omitted for brevity&gt;
+</code></pre>
+
+<p>The <code>show interfaces</code> command displays a wealth of information per interface. Let’s say we want to capture the following information:</p>
 
 <ul>
-<li>Interface name</li>
-<li>MTU</li>
-<li>txload</li>
-<li>rxload</li>
+  <li>Interface name</li>
+  <li>MTU</li>
+  <li>txload</li>
+  <li>rxload</li>
 </ul>
 
-<h3>Building a list</h3>
-
+<h3 id="building-a-list">Building a list</h3>
 <p>The first step is to build a list using <code>pattern_match</code> where each element of the list corresponds to all the information about an interface.</p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="nn">---</span>
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">parser meta data</span>
-  <span class="l l-Scalar l-Scalar-Plain">parser_metadata</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">version</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1.0</span>
-    <span class="l l-Scalar l-Scalar-Plain">command</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">show interface</span>
-    <span class="l l-Scalar l-Scalar-Plain">network_os</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ios</span>
 
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">match sections</span>
-  <span class="l l-Scalar l-Scalar-Plain">pattern_match</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">regex</span><span class="p p-Indicator">:</span> <span class="s">&quot;^(\\S+)</span><span class="nv"> </span><span class="s">is.*(?:up|down),&quot;</span>
-    <span class="l l-Scalar l-Scalar-Plain">match_all</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-    <span class="l l-Scalar l-Scalar-Plain">match_greedy</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-  <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">section</span>
-  <span class="l l-Scalar l-Scalar-Plain">export</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-</code></pre></div>
+<pre><code class="language-yaml">---
+- name: parser meta data
+  parser_metadata:
+    version: 1.0
+    command: show interface
+    network_os: ios
+
+- name: match sections
+  pattern_match:
+    regex: "^(\\S+) is.*(?:up|down),"
+    match_all: yes
+    match_greedy: yes
+  register: section
+  export: yes
+
+</code></pre>
+
 <blockquote>
-<p>The <code>match_greedy</code> will match everything after the regex match. The <code>match_all</code> will match each interface as a distinct match and add it to the list variable called section. </p>
+  <p>The <code>match_greedy</code> will match everything after the regex match. The <code>match_all</code> will match each interface as a distinct match and add it to the list variable called section.</p>
 </blockquote>
 
 <p>Debugging this output in the playbook reveals the contents of the <code>section</code> variable:</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span></span>TASK <span class="o">[</span>DISPLAY THE PARSED OUTPUT<span class="o">]</span> **************************************************************************************************ok: <span class="o">[</span>rtr1<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
-    <span class="s2">&quot;section&quot;</span>: <span class="o">[</span>
-        <span class="s2">&quot;GigabitEthernet1 is up, line protocol is up \n  Hardware is CSR vNIC, address is 0e56.892c.0434 (bia 0e56.892c.0434)\n  Internet address is 172.16.230.103/16\n  MTU 1500 bytes, BW 1000000 Kbit/sec, DLY 10 usec, \n     reliability 255/255, txload 1/255, rxload 1/255\n  Encapsulation ARPA, loopback not set\n  Keepalive set (10 sec)\n  Full Duplex, 1000Mbps, link type is auto, media type is Virtual\n  output flow-control is unsupported, input flow-control is unsupported\n  ARP type: ARPA, ARP Timeout 04:00:00\n  Last input 00:00:00, output 00:00:00, output hang never\n  Last clearing of \&quot;show interface\&quot; counters never\n  Input queue: 0/375/0/0 (size/max/drops/flushes); Total output drops: 0\n  Queueing strategy: fifo\n  Output queue: 0/40 (size/max)\n  5 minute input </span>
-<span class="s2">rate 1000 bits/sec, 2 packets/sec\n  5 minute output rate 1000 bits/sec, 2 packets/sec\n     206723 packets input, 21601205 bytes, 0 no buffer\n     Received 0 broadcasts (0 IP multicasts)\n     0 runts, 0 giants, 0 throttles \n     0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored\n     0 watchdog, 0 multicast, 0 pause input\n     208526 packets output, 27353095 bytes, 0 underruns\n     0 output errors, 0 collisions, 1 interface resets\n     0 unknown protocol drops\n     0 babbles, 0 late collision, 0 deferred\n     0 lost carrier, 0 no carrier, 0 pause output\n     0 output buffer failures, 0 output buffers swapped out\n&quot;</span>, 
-        <span class="s2">&quot;Loopback0 is up, line protocol is up \n  Hardware is Loopback\n  Internet address is 192.168.1.101/24\n  MTU 1514 bytes, BW 8000000 Kbit/sec, DLY 5000 usec, \n     reliability 255/255, txload 1/255, rxload 1/255\n  Encapsulation LOOPBACK, loopback not set\n  Keepalive set (10 sec)\n  Last input never, output never, output hang never\n  Last clearing of \&quot;show interface\&quot; counters never\n  Input queue: 0/75/0/0 (size/max/drops/flushes); Total output drops: 0\n  Que</span>
-<span class="s2">.</span>
-<span class="s2">.</span>
-<span class="s2">.</span>
-<span class="s2">.</span>
-<span class="s2">.</span>
-<span class="s2">&lt;output omitted for brevity&gt;</span>
-</code></pre></div>
+
+<pre><code class="language-bash">
+TASK [DISPLAY THE PARSED OUTPUT] **************************************************************************************************ok: [rtr1] =&gt; {
+    "section": [
+        "GigabitEthernet1 is up, line protocol is up \n  Hardware is CSR vNIC, address is 0e56.892c.0434 (bia 0e56.892c.0434)\n  Internet address is 172.16.230.103/16\n  MTU 1500 bytes, BW 1000000 Kbit/sec, DLY 10 usec, \n     reliability 255/255, txload 1/255, rxload 1/255\n  Encapsulation ARPA, loopback not set\n  Keepalive set (10 sec)\n  Full Duplex, 1000Mbps, link type is auto, media type is Virtual\n  output flow-control is unsupported, input flow-control is unsupported\n  ARP type: ARPA, ARP Timeout 04:00:00\n  Last input 00:00:00, output 00:00:00, output hang never\n  Last clearing of \"show interface\" counters never\n  Input queue: 0/375/0/0 (size/max/drops/flushes); Total output drops: 0\n  Queueing strategy: fifo\n  Output queue: 0/40 (size/max)\n  5 minute input 
+rate 1000 bits/sec, 2 packets/sec\n  5 minute output rate 1000 bits/sec, 2 packets/sec\n     206723 packets input, 21601205 bytes, 0 no buffer\n     Received 0 broadcasts (0 IP multicasts)\n     0 runts, 0 giants, 0 throttles \n     0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored\n     0 watchdog, 0 multicast, 0 pause input\n     208526 packets output, 27353095 bytes, 0 underruns\n     0 output errors, 0 collisions, 1 interface resets\n     0 unknown protocol drops\n     0 babbles, 0 late collision, 0 deferred\n     0 lost carrier, 0 no carrier, 0 pause output\n     0 output buffer failures, 0 output buffers swapped out\n", 
+        "Loopback0 is up, line protocol is up \n  Hardware is Loopback\n  Internet address is 192.168.1.101/24\n  MTU 1514 bytes, BW 8000000 Kbit/sec, DLY 5000 usec, \n     reliability 255/255, txload 1/255, rxload 1/255\n  Encapsulation LOOPBACK, loopback not set\n  Keepalive set (10 sec)\n  Last input never, output never, output hang never\n  Last clearing of \"show interface\" counters never\n  Input queue: 0/75/0/0 (size/max/drops/flushes); Total output drops: 0\n  Que
+.
+.
+.
+.
+.
+&lt;output omitted for brevity&gt;
+</code></pre>
+
 <blockquote>
-<p>Note that all info about Gig1 is the first element of this list. Loopback0 is the second element and so on.</p>
+  <p>Note that all info about Gig1 is the first element of this list. Loopback0 is the second element and so on.</p>
 </blockquote>
 
-<h3>Building a pattern group</h3>
+<h3 id="building-a-pattern-group">Building a pattern group</h3>
 
 <p>Now that we have list, we can use the same design patterns we are familiar with in Ansible, using loops. Using the <code>pattern_group</code> directive we can now build a new nested variable that uses the <code>pattern_match</code> directive.</p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">match interface values</span>
-  <span class="l l-Scalar l-Scalar-Plain">pattern_group</span><span class="p p-Indicator">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">match name</span>
-      <span class="l l-Scalar l-Scalar-Plain">pattern_match</span><span class="p p-Indicator">:</span>
-        <span class="l l-Scalar l-Scalar-Plain">regex</span><span class="p p-Indicator">:</span> <span class="s">&quot;^(\\S+)&quot;</span>
-        <span class="l l-Scalar l-Scalar-Plain">content</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item</span><span class="nv"> </span><span class="s">}}&quot;</span>
-      <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">name</span>
 
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">match mtu</span>
-      <span class="l l-Scalar l-Scalar-Plain">pattern_match</span><span class="p p-Indicator">:</span>
-        <span class="l l-Scalar l-Scalar-Plain">regex</span><span class="p p-Indicator">:</span> <span class="s">&quot;MTU</span><span class="nv"> </span><span class="s">(\\d+)&quot;</span>
-        <span class="l l-Scalar l-Scalar-Plain">content</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item</span><span class="nv"> </span><span class="s">}}&quot;</span>
-      <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">mtu</span>
+<pre><code class="language-yaml">- name: match interface values
+  pattern_group:
+    - name: match name
+      pattern_match:
+        regex: "^(\\S+)"
+        content: "{{ item }}"
+      register: name
 
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">match txload</span>
-      <span class="l l-Scalar l-Scalar-Plain">pattern_match</span><span class="p p-Indicator">:</span>
-        <span class="l l-Scalar l-Scalar-Plain">regex</span><span class="p p-Indicator">:</span> <span class="s">&quot;reliability.*txload\\s(\\S+),.*&quot;</span>
-        <span class="l l-Scalar l-Scalar-Plain">content</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item</span><span class="nv"> </span><span class="s">}}&quot;</span>
-      <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">txload</span>
+    - name: match mtu
+      pattern_match:
+        regex: "MTU (\\d+)"
+        content: "{{ item }}"
+      register: mtu
 
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">match rxload</span>
-      <span class="l l-Scalar l-Scalar-Plain">pattern_match</span><span class="p p-Indicator">:</span>
-        <span class="l l-Scalar l-Scalar-Plain">regex</span><span class="p p-Indicator">:</span> <span class="s">&quot;reliability.*rxload\\s(\\S+)&quot;</span>
-        <span class="l l-Scalar l-Scalar-Plain">content</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item</span><span class="nv"> </span><span class="s">}}&quot;</span>
-      <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">rxload</span>
-  <span class="l l-Scalar l-Scalar-Plain">loop</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">section</span><span class="nv"> </span><span class="s">}}&quot;</span>
-  <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">interfaces</span>
-  <span class="l l-Scalar l-Scalar-Plain">export</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-</code></pre></div>
+    - name: match txload
+      pattern_match:
+        regex: "reliability.*txload\\s(\\S+),.*"
+        content: "{{ item }}"
+      register: txload
+
+    - name: match rxload
+      pattern_match:
+        regex: "reliability.*rxload\\s(\\S+)"
+        content: "{{ item }}"
+      register: rxload
+  loop: "{{ section }}"
+  register: interfaces
+  export: yes
+
+</code></pre>
+
 <p>Effectively, we are looping through the data of each interface and creating a pattern group (registering it as a variable called <code>interfaces</code>). Note the similarity of pattern using the <code>item</code> variable while working with loops in Ansible. Each of the <code>pattern_match</code> directives nested within the <code>pattern_group</code> is using a regex to match the data we wanted at the start.</p>
 
 <p>On re-running the playbook with the updated parser, our debug output looks as follows:</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span></span>TASK <span class="o">[</span>DISPLAY THE PARSED OUTPUT<span class="o">]</span> **************************************************************************************************
-ok: <span class="o">[</span>rtr1<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
-    <span class="s2">&quot;interfaces&quot;</span>: <span class="o">[</span>
-        <span class="o">{</span>
-            <span class="s2">&quot;mtu&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;matches&quot;</span>: <span class="o">[</span>
-                    <span class="s2">&quot;1500&quot;</span>
-                <span class="o">]</span>
-            <span class="o">}</span>, 
-            <span class="s2">&quot;name&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;matches&quot;</span>: <span class="o">[</span>
-                    <span class="s2">&quot;GigabitEthernet1&quot;</span>
-                <span class="o">]</span>
-            <span class="o">}</span>, 
-            <span class="s2">&quot;rxload&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;matches&quot;</span>: <span class="o">[</span>
-                    <span class="s2">&quot;1/255&quot;</span>
-                <span class="o">]</span>
-            <span class="o">}</span>, 
-            <span class="s2">&quot;txload&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;matches&quot;</span>: <span class="o">[</span>
-                    <span class="s2">&quot;1/255&quot;</span>
-                <span class="o">]</span>
-            <span class="o">}</span>
-        <span class="o">}</span>, 
-        <span class="o">{</span>
-            <span class="s2">&quot;mtu&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;matches&quot;</span>: <span class="o">[</span>
-                    <span class="s2">&quot;1514&quot;</span>
-                <span class="o">]</span>
-            <span class="o">}</span>, 
-            <span class="s2">&quot;name&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;matches&quot;</span>: <span class="o">[</span>
-                    <span class="s2">&quot;Loopback0&quot;</span>
-                <span class="o">]</span>
-            <span class="o">}</span>, 
-            <span class="s2">&quot;rxload&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;matches&quot;</span>: <span class="o">[</span>
-                    <span class="s2">&quot;1/255&quot;</span>
-                <span class="o">]</span>
-            <span class="o">}</span>, 
-            <span class="s2">&quot;txload&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;matches&quot;</span>: <span class="o">[</span>
-                    <span class="s2">&quot;1/255&quot;</span>
-                <span class="o">]</span>
-            <span class="o">}</span>
-        <span class="o">}</span>, 
+
+<pre><code class="language-bash">TASK [DISPLAY THE PARSED OUTPUT] **************************************************************************************************
+ok: [rtr1] =&gt; {
+    "interfaces": [
+        {
+            "mtu": {
+                "matches": [
+                    "1500"
+                ]
+            }, 
+            "name": {
+                "matches": [
+                    "GigabitEthernet1"
+                ]
+            }, 
+            "rxload": {
+                "matches": [
+                    "1/255"
+                ]
+            }, 
+            "txload": {
+                "matches": [
+                    "1/255"
+                ]
+            }
+        }, 
+        {
+            "mtu": {
+                "matches": [
+                    "1514"
+                ]
+            }, 
+            "name": {
+                "matches": [
+                    "Loopback0"
+                ]
+            }, 
+            "rxload": {
+                "matches": [
+                    "1/255"
+                ]
+            }, 
+            "txload": {
+                "matches": [
+                    "1/255"
+                ]
+            }
+        }, 
 .
 .
 .
 .
 .
-&lt;output omitted <span class="k">for</span> brevity&gt;
-</code></pre></div>
-<h3>Creating a JSON output</h3>
+&lt;output omitted for brevity&gt;
+</code></pre>
+
+<h3 id="creating-a-json-output">Creating a JSON output</h3>
 
 <p>Now that we have our regular expressions sorted out and we can see that the data we are interested in is being returned as a structured object, all that remains is to build a JSON object similar to how we did it in <a href="https://termlen0.github.io/2018/06/26/observations/">Part1</a>.</p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">generate json data structure</span>
-  <span class="l l-Scalar l-Scalar-Plain">json_template</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">template</span><span class="p p-Indicator">:</span>
-      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.name.matches.0</span><span class="nv"> </span><span class="s">}}&quot;</span>
-        <span class="l l-Scalar l-Scalar-Plain">object</span><span class="p p-Indicator">:</span>
-        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">config</span>
-          <span class="l l-Scalar l-Scalar-Plain">object</span><span class="p p-Indicator">:</span>
-            <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">name</span>
-              <span class="l l-Scalar l-Scalar-Plain">value</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.name.matches.0</span><span class="nv"> </span><span class="s">}}&quot;</span>
-            <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">mtu</span>
-              <span class="l l-Scalar l-Scalar-Plain">value</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.mtu.matches.0</span><span class="nv"> </span><span class="s">}}&quot;</span>
-            <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">rxload</span>
-              <span class="l l-Scalar l-Scalar-Plain">value</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.rxload.matches.0</span><span class="nv"> </span><span class="s">}}&quot;</span>
-            <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">txload</span>
-              <span class="l l-Scalar l-Scalar-Plain">value</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.txload.matches.0</span><span class="nv"> </span><span class="s">}}&quot;</span>
-  <span class="l l-Scalar l-Scalar-Plain">loop</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">interfaces</span><span class="nv"> </span><span class="s">}}&quot;</span>
-  <span class="l l-Scalar l-Scalar-Plain">export</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-  <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">interface_facts</span>
-</code></pre></div>
+
+<pre><code class="language-yaml">- name: generate json data structure
+  json_template:
+    template:
+      - key: "{{ item.name.matches.0 }}"
+        object:
+        - key: config
+          object:
+            - key: name
+              value: "{{ item.name.matches.0 }}"
+            - key: mtu
+              value: "{{ item.mtu.matches.0 }}"
+            - key: rxload
+              value: "{{ item.rxload.matches.0 }}"
+            - key: txload
+              value: "{{ item.txload.matches.0 }}"
+  loop: "{{ interfaces }}"
+  export: yes
+  register: interface_facts
+</code></pre>
+
 <p>Re-running the playbook and debugging <code>interface_facts</code> shows us the final, desired output.</p>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span></span>TASK <span class="o">[</span>DISPLAY THE PARSED OUTPUT<span class="o">]</span> **************************************************************************************************
-ok: <span class="o">[</span>rtr1<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
-    <span class="s2">&quot;interface_facts&quot;</span>: <span class="o">[</span>
-        <span class="o">{</span>
-            <span class="s2">&quot;GigabitEthernet1&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;config&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;mtu&quot;</span>: <span class="m">1500</span>, 
-                    <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;GigabitEthernet1&quot;</span>, 
-                    <span class="s2">&quot;rxload&quot;</span>: <span class="s2">&quot;1/255&quot;</span>, 
-                    <span class="s2">&quot;txload&quot;</span>: <span class="s2">&quot;1/255&quot;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>, 
-        <span class="o">{</span>
-            <span class="s2">&quot;Loopback0&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;config&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;mtu&quot;</span>: <span class="m">1514</span>, 
-                    <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;Loopback0&quot;</span>, 
-                    <span class="s2">&quot;rxload&quot;</span>: <span class="s2">&quot;1/255&quot;</span>, 
-                    <span class="s2">&quot;txload&quot;</span>: <span class="s2">&quot;1/255&quot;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>, 
-</code></pre></div>
+
+<pre><code class="language-bash">TASK [DISPLAY THE PARSED OUTPUT] **************************************************************************************************
+ok: [rtr1] =&gt; {
+    "interface_facts": [
+        {
+            "GigabitEthernet1": {
+                "config": {
+                    "mtu": 1500, 
+                    "name": "GigabitEthernet1", 
+                    "rxload": "1/255", 
+                    "txload": "1/255"
+                }
+            }
+        }, 
+        {
+            "Loopback0": {
+                "config": {
+                    "mtu": 1514, 
+                    "name": "Loopback0", 
+                    "rxload": "1/255", 
+                    "txload": "1/255"
+                }
+            }
+        }, 
+
+</code></pre>
+
 <p>This is why I think <code>command_parser</code> is such a powerful tool to parse complex show command output, using the same Ansible design patterns we are familiar with, without needing to learn yet another domain specific syntax or language. As network engineers we now have a tool that abstracts away the underlying complexity of programming.</p>
 
-<p>Alright now on to some more <code>command_parser</code> goodness!.....</p>
+<p>Alright now on to some more <code>command_parser</code> goodness!…..</p>
 
-<h3>Building customized &quot;facts&quot; without needing to write a module!</h3>
+<h3 id="building-customized-facts-without-needing-to-write-a-module">Building customized “facts” without needing to write a module!</h3>
 
 <p><strong>NOTE: THE FOLLOWING WORKS <em>ONLY</em> WITH THE DEVEL BRANCH OF THE NETWORK-ENGINE ROLE AT THE TIME OF THIS POST</strong></p>
 
-<p>If you have used the network modules in Ansible you are probably familiar with the <code>*_facts</code> modules. Modules like <code>ios_facts</code>, <code>eos_facts</code>, <code>junos_facts</code> etc. While you can have limited control over the output from these modules (by using the <code>gather_subset</code> directive), you are by and large restricted to what the module creators consider <strong>&quot;facts&quot;</strong>.</p>
+<p>If you have used the network modules in Ansible you are probably familiar with the <code>*_facts</code> modules. Modules like <code>ios_facts</code>, <code>eos_facts</code>, <code>junos_facts</code> etc. While you can have limited control over the output from these modules (by using the <code>gather_subset</code> directive), you are by and large restricted to what the module creators consider <strong>“facts”</strong>.</p>
 
-<p>In the following section, let&#39;s look at a powerful directive from the <code>command_parser</code> module called <code>extend</code> to learn how we can build our own customized facts parser - without needing to write a single line of code!!</p>
+<p>In the following section, let’s look at a powerful directive from the <code>command_parser</code> module called <code>extend</code> to learn how we can build our own customized facts parser - without needing to write a single line of code!!</p>
 
-<p>We&#39;ll use the parsers we created in Part1 and the above one to create a single variable called <code>ios_interface_facts</code>. </p>
+<p>We’ll use the parsers we created in Part1 and the above one to create a single variable called <code>ios_interface_facts</code>.</p>
 
 <p>The basic changes needed to the parsers are as follows:</p>
 
-<h6>show_ip_interfaces.yaml</h6>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span>  <span class="l l-Scalar l-Scalar-Plain">extend</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ios_interface_facts</span>
-</code></pre></div>
+<h6 id="show_ip_interfacesyaml">show_ip_interfaces.yaml</h6>
+
+<pre><code class="language-yaml">  extend: ios_interface_facts
+
+</code></pre>
+
 <p>and</p>
 
-<h6>show_interfaces.yaml</h6>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span>  <span class="l l-Scalar l-Scalar-Plain">export_as</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
-  <span class="l l-Scalar l-Scalar-Plain">extend</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ios_interface_facts</span>
-</code></pre></div>
+<h6 id="show_interfacesyaml">show_interfaces.yaml</h6>
+
+<pre><code class="language-yaml">  export_as: dict
+  extend: ios_interface_facts
+
+</code></pre>
+
 <blockquote>
-<p>These directives are added to the <code>json_template</code> section of the parser. Please see the github  <a href="https://github.com/termlen0/parser_demo">repo</a> for details. You will need to uncomment them to test.</p>
+  <p>These directives are added to the <code>json_template</code> section of the parser. Please see the github  <a href="https://github.com/termlen0/parser_demo">repo</a> for details. You will need to uncomment them to test.</p>
 </blockquote>
 
 <p>With this in place, re-running the playbook and debugging the <code>ios_interfaces_facts</code> variable shows how the output of both the above parsers are made available in a single variable.</p>
 
 <blockquote>
-<p>Note: Run the playbook invoking the <strong>demo_extend</strong> tag if you are testing with the sample <a href="https://github.com/termlen0/parser_demo">repo</a></p>
+  <p>Note: Run the playbook invoking the <strong>demo_extend</strong> tag if you are testing with the sample <a href="https://github.com/termlen0/parser_demo">repo</a></p>
 </blockquote>
-<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span></span>TASK <span class="o">[</span>DISPLAY THE GENERATED FACT<span class="o">]</span> ****************************************************************************************************************
-ok: <span class="o">[</span>rtr1<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
-    <span class="s2">&quot;ios_interface_facts&quot;</span>: <span class="o">{</span>
-        <span class="s2">&quot;interface_facts&quot;</span>: <span class="o">{</span>
-            <span class="s2">&quot;GigabitEthernet1&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;config&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;mtu&quot;</span>: <span class="m">1500</span>, 
-                    <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;GigabitEthernet1&quot;</span>, 
-                    <span class="s2">&quot;rxload&quot;</span>: <span class="s2">&quot;1/255&quot;</span>, 
-                    <span class="s2">&quot;txload&quot;</span>: <span class="s2">&quot;1/255&quot;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>, 
-            <span class="s2">&quot;Loopback0&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;config&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;mtu&quot;</span>: <span class="m">1514</span>, 
-                    <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;Loopback0&quot;</span>, 
-                    <span class="s2">&quot;rxload&quot;</span>: <span class="s2">&quot;1/255&quot;</span>, 
-                    <span class="s2">&quot;txload&quot;</span>: <span class="s2">&quot;1/255&quot;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>, 
-            <span class="s2">&quot;Loopback1&quot;</span>: <span class="o">{</span>
+
+<pre><code class="language-bash">TASK [DISPLAY THE GENERATED FACT] ****************************************************************************************************************
+ok: [rtr1] =&gt; {
+    "ios_interface_facts": {
+        "interface_facts": {
+            "GigabitEthernet1": {
+                "config": {
+                    "mtu": 1500, 
+                    "name": "GigabitEthernet1", 
+                    "rxload": "1/255", 
+                    "txload": "1/255"
+                }
+            }, 
+            "Loopback0": {
+                "config": {
+                    "mtu": 1514, 
+                    "name": "Loopback0", 
+                    "rxload": "1/255", 
+                    "txload": "1/255"
+                }
+            }, 
+            "Loopback1": {
 .
 .
 .
 .
 .
-&lt;output omitted <span class="k">for</span> brevity&gt;
-        <span class="s2">&quot;ip_interface_facts&quot;</span>: <span class="o">[</span>
-            <span class="o">{</span>
-                <span class="s2">&quot;GigabitEthernet1&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;data&quot;</span>: <span class="o">{</span>
-                        <span class="s2">&quot;admin_state&quot;</span>: <span class="s2">&quot;up&quot;</span>, 
-                        <span class="s2">&quot;ip&quot;</span>: <span class="s2">&quot;172.16.230.103&quot;</span>, 
-                        <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;GigabitEthernet1&quot;</span>, 
-                        <span class="s2">&quot;protocol_state&quot;</span>: <span class="s2">&quot;up&quot;</span>
-                    <span class="o">}</span>
-                <span class="o">}</span>
-            <span class="o">}</span>, 
-            <span class="o">{</span>
-                <span class="s2">&quot;Loopback0&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;data&quot;</span>: <span class="o">{</span>
-                        <span class="s2">&quot;admin_state&quot;</span>: <span class="s2">&quot;up&quot;</span>, 
-                        <span class="s2">&quot;ip&quot;</span>: <span class="s2">&quot;192.168.1.101&quot;</span>, 
-                        <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;Loopback0&quot;</span>, 
-                        <span class="s2">&quot;protocol_state&quot;</span>: <span class="s2">&quot;up&quot;</span>
-                    <span class="o">}</span>
-                <span class="o">}</span>
-            <span class="o">}</span>, 
-            <span class="o">{</span>
-                <span class="s2">&quot;Loopback1&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;data&quot;</span>: <span class="o">{</span>
-                        <span class="s2">&quot;admin_state&quot;</span>: <span class="s2">&quot;up&quot;</span>, 
-                        <span class="s2">&quot;ip&quot;</span>: <span class="s2">&quot;10.1.1.101&quot;</span>, 
+&lt;output omitted for brevity&gt;
+        "ip_interface_facts": [
+            {
+                "GigabitEthernet1": {
+                    "data": {
+                        "admin_state": "up", 
+                        "ip": "172.16.230.103", 
+                        "name": "GigabitEthernet1", 
+                        "protocol_state": "up"
+                    }
+                }
+            }, 
+            {
+                "Loopback0": {
+                    "data": {
+                        "admin_state": "up", 
+                        "ip": "192.168.1.101", 
+                        "name": "Loopback0", 
+                        "protocol_state": "up"
+                    }
+                }
+            }, 
+            {
+                "Loopback1": {
+                    "data": {
+                        "admin_state": "up", 
+                        "ip": "10.1.1.101", 
 .
 .
 .
 .
 .
-&lt;output omitted <span class="k">for</span> brevity&gt;
-</code></pre></div>
+&lt;output omitted for brevity&gt;
+</code></pre>
+
 <p>As you can see the <code>ios_interfaces_facts</code> is a nested object that contains 2 keys <code>interface_facts</code> - the parsed output of the <em>show interfaces</em> command - and the <code>ip_interface_facts</code> - the parsed output of the <em>show ip interface brief</em> command.</p>
 
-<p>Hopefully this quick illustration of some of the powerful directives within command parser are helpful to you. I&#39;d love to hear what your thoughts are on this approach and perceived ease/difficulty with this method of parsing device command output.</p>
+<p>Hopefully this quick illustration of some of the powerful directives within command parser are helpful to you. I’d love to hear what your thoughts are on this approach and perceived ease/difficulty with this method of parsing device command output.</p>
 
 </div>
 <a href="https://twitter.com/share" class="twitter-share-button"
@@ -480,6 +509,15 @@ data-via="termlen0">Tweet</a>
 <div class="related">
   <h2>Related Posts</h2>
   <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2019/11/16/observations/">
+            Ansible Custom Inventory Plugin - a quick start
+            <small>16 Nov 2019</small>
+          </a>
+        </h3>
+      </li>
     
       <li>
         <h3>
@@ -495,15 +533,6 @@ data-via="termlen0">Tweet</a>
           <a href="/2018/07/30/observations/">
             Using Ansible network-engine to simplify network automation tasks
             <small>30 Jul 2018</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
-          <a href="/2018/06/26/observations/">
-            Part1 of a 2 part blog on using the Ansible network-engine's command parser
-            <small>26 Jun 2018</small>
           </a>
         </h3>
       </li>

@@ -1,0 +1,9 @@
+I"<p>This post shows you how to write a custom inventory plugin for Ansible. As usual, this is not a deep dive. If you are interested about what inventory plugins are or why you might want to use them. Please see <a href="https://docs.ansible.com/ansible/latest/plugins/inventory.html">the Ansible docs</a>. Additionally for an in-depth understanding of inventories in general and inventory plugins in particular I highly recommend these videos:</p>
+
+<ol>
+  <li><a href="https://www.ansible.com/ansible-inventory-for-fun-and-profit">Ansible inventory for fun and profit</a> by <a href="https://twitter.com/mattdavispdx">@Matt Davis</a></li>
+  <li><a href="https://www.ansible.com/managing-meaningful-inventories">Managing Meaningful Inventories</a> by <a href="https://twitter.com/WillTome">@Will Tome</a> and <a href="https://github.com/alancoding">@Alan Rominger</a></li>
+</ol>
+
+<p>Finally, this post describes <em>my</em> workflow while building custom inventory plugins. This post is better consumed as a “do-it-along”.</p>
+:ET

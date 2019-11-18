@@ -95,6 +95,8 @@
           
         
       
+        
+      
 
             <a class="sidebar-nav-item" href="https://github.com/termlen0">GitHub project</a>
 
@@ -116,6 +118,29 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2018/03/19/observations/">
+        Please reverse mentor your managers
+      </a>
+    </h1>
+
+    <span class="post-date">19 Mar 2018</span>
+
+    <p><em>“Everybody automate everything, now!”</em> - Enterprise CTO (who just got back from a industry networking event)</p>
+
+<p><em>“I wish my management would help bring in some of this cool network automation stuff I am learning from my peers online”</em> - Network engineer</p>
+
+<p>I’ve heard these comments from numerous organizations; often from CTOs and engineers within the same organization. So if the topmost level of the management is laying down goals to automate “everything” and the engineers themselves are excited to make it happen, why is there a gap?</p>
+
+<p><img src="/assets/middle_mgmt.png" alt="" /></p>
+
+<p>So are middle managers the problem? Across organizations, middle mangers could be senior network engineers who have advanced to a point where there is no technical growth path. They have become comfortable managing a team of network engineers and know how to hire network talent. The automation space is filled with technical jargon and buzzwords that are new (and therefore scary). Coming from a technical background fear of the unknown can be unnerving.</p>
+
+
+    <a href="/2018/03/19/observations/"> Read more </a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2017/07/15/observations/">
         NETCONF Ain't YANG
       </a>
@@ -127,15 +152,15 @@
 
 <p>Recently I was working on  YANG device models, using NETCONF to
 interact with the actual device (NXOS 7.0.3.I6.1). I was using
-Cisco&#39;s
+Cisco’s
 <a href="http://www.cisco.com/c/en/us/td/docs/switches/datacenter/nexus9000/sw/7-x/programmability/guide/b_Cisco_Nexus_9000_Series_NX-OS_Programmability_Guide_7x/b_Cisco_Nexus_9000_Series_NX-OS_Programmability_Guide_7x_chapter_010100.html">NX-OS Programmability Guide</a> for
 the 7.x version. I have had previous experience working with
-YANG and Cisco&#39;s NEDs through the tail-f/NSO product and was feeling
+YANG and Cisco’s NEDs through the tail-f/NSO product and was feeling
 quite confident in my understanding of how YANG is being used for
 modeling (Either a service or a device) and how NETCONF was one of the
 protocols used to interact with the model. 
-However, I was getting lost trying to navigate the NXOS&#39;s YANG model
-over the NETCONF client. </p>
+However, I was getting lost trying to navigate the NXOS’s YANG model
+over the NETCONF client.</p>
 
     <a href="/2017/07/15/observations/"> Read more </a>
   </div>
@@ -160,10 +185,10 @@ clear text, locally, indefinitely. I came across this stackoverflow
 I adapted for Linux. The concept is as follows:</p>
 
 <ol>
-<li>Use a .netrc file to store your credentials. This follows the
-  file format for <a href="https://www.ibm.com/support/knowledgecenter/SSB27U_6.2.0/com.ibm.zvm.v620.kijl0/netrcd.htm#netrcd">netrc</a></li>
-<li>Encrypt this file,
-  using <a href="https://www.gnupg.org/">GNU Privacy Guard</a></li>
+  <li>Use a .netrc file to store your credentials. This follows the
+file format for <a href="https://www.ibm.com/support/knowledgecenter/SSB27U_6.2.0/com.ibm.zvm.v620.kijl0/netrcd.htm#netrcd">netrc</a></li>
+  <li>Encrypt this file,
+using <a href="https://www.gnupg.org/">GNU Privacy Guard</a></li>
 </ol>
 
     <a href="/2017/04/20/observations/"> Read more </a>
@@ -178,8 +203,9 @@ I adapted for Linux. The concept is as follows:</p>
 
     <span class="post-date">12 Apr 2017</span>
 
-    <p>In it&#39;s most basic form, TDD works as follows:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>1. Envision the outcome of what you are developing [ Adding a VLAN
+    <p>In it’s most basic form, TDD works as follows:</p>
+
+<pre><code>1. Envision the outcome of what you are developing [ Adding a VLAN
    to a switch ]
 2. Write a test to validate that outcome [ Is the desired VLAN on
    the switch ]
@@ -188,9 +214,11 @@ I adapted for Linux. The concept is as follows:</p>
 4. Refactor your code [ write the roles/tasks needed for the tests
    to pass ]
 5. Re-run tests [role] to ensure that they now pass
-</code></pre></div>
+</code></pre>
+
 <p>In this post, I hope to share my observations on how I used ansible to
 implement this using roles. I start with known facts/assumptions:</p>
+
 
     <a href="/2017/04/12/observations/"> Read more </a>
   </div>
@@ -206,42 +234,22 @@ implement this using roles. I start with known facts/assumptions:</p>
 
     <p>This post is a consequence of an interesting conversation around
 declarative control systems with a colleague. Throughout the
-conversation, we kept coming back to the &#39;popularity&#39; of automation
+conversation, we kept coming back to the ‘popularity’ of automation
 and specifically, how revolutionary, it appears for legacy, closed
 systems(aka 80% of network gear in enterprises). When you think about it,
-in a traditional control system (a bread toaster, in it&#39;s simplest
+in a traditional control system (a bread toaster, in it’s simplest
 form), we interact with the system as follows:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>1. We tell it (declare) what our desired outcome is (how brown do you
+
+<pre><code>1. We tell it (declare) what our desired outcome is (how brown do you
 want your toast)
 2. Inputs (the slices of bread)
-</code></pre></div>
+</code></pre>
+
 <p>The system then figures out how to achieve your end state. In other
 words..</p>
 
+
     <a href="/2017/02/03/observations/"> Read more </a>
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2016/12/28/observations/">
-        The need for a stateful variable tracker and an implementation example
-      </a>
-    </h1>
-
-    <span class="post-date">28 Dec 2016</span>
-
-    <p>When it comes to automation role models, network engineers have often looked up,
-to our compute brethren. For decades, compute admins have had tools that allowed
-them to execute scripts on systems at particular times: typically backups,
-rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
-Ansible, have empowered &#39;Developer Administrators&#39;, to stand up the entire app
-stack, automatically.</p>
-
-<p>In my network automation journey, I realized early on that, a big gap/obstacle
-for network automation is the need for a backend, to track positive
-integers; a source of truth, that knows what numeric value was last</p>
-
-    <a href="/2016/12/28/observations/"> Read more </a>
   </div>
   
 </div>

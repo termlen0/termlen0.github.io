@@ -1,0 +1,129 @@
+I"H <p>Last week at Networking field day (<a href="http://techfieldday.com/event/nfd18/">NFD18</a>), Peter Sprygada (<a href="https://twitter.com/privateip">@privateip</a>) gave a fantastic presentation about the problems in network automation and new initiatives from Ansible to help network and automation engineers.</p>
+
+<p>In short - network automation teams are recreating similar Ansible playbooks since most of us have similar problems to solve. For instance, adding an application to the datacenter will require creation of VLANS, extending them over port channels, creating STP priorities etc. The Ansible network-engine strives to provide pre-canned, opinionated (meaning best-practices) roles that will make automation easier to kick start and reuse across most teams.</p>
+
+<!--more-->
+
+<p><a href="https://youtu.be/9tP75pfiZV0?t=14m55s">In this section of the video</a>, Peter dives into the layout of the network-engine role and how it allows the creation of “network functions” ( <em>BTW, I highly recommend watching the entire video</em> ).</p>
+
+<p>In this blog post, I am hoping to illustrate the idea of network functions through an example. The NFD18 presentation also seemed to raise questions/concerns about Ansible’s approach, potentially causing it to move away from being a simple automation tool, to becoming a complex one - like a programming language. This was interesting feedback to me. I hope to illustrate that, in contrast, the approach actually makes writing playbooks extremely easy for network engineers through this post. As always, I welcome your feedback/disagreements.</p>
+
+<h3 id="an-illustrative-use-case">An illustrative use case</h3>
+
+<p>As network engineers how many times have we dealt with a ticket/request that reads: <strong>“My super important application needs to talk to the database on port 5555. Make this happen!”</strong>. Well, maybe it is worded a lot more politely…..maybe. This might require of us to crawl through hundreds of devices to validate existing ACLs, to ensure whether that the traffic is already being allowed.</p>
+
+<p>What if we had a “network function” that did this for us? Given the source/destination tuple, this “function” would return all matched ACLs within the infrastructure.</p>
+
+<h3 id="persona-based-automation-development">Persona based automation development</h3>
+
+<p>In my opinion, one of the main reason for the popularity of Ansible for network automation, has been it’s simplicity and easy of use. A network engineer can write a playbook using a <code>YAML</code> file that is very readable (and easily re-callable 6 months after writing it) to manage configuration or use operational state data.</p>
+
+<p>For our present use case, say something like this:</p>
+
+<pre><code class="language-yaml">---
+- name: CHECK FOR ACL THAT MATCHES RULE
+  hosts: all
+  connection: network_cli
+  gather_facts: no
+
+  tasks:
+
+    - include_role:
+        name: ios_check_acls
+      vars:
+        protocol: 'udp'
+        action: 'permit'
+        src_network: '10.100.100.2'
+        src_mask: '255.255.255.255'
+        dst_network: '3.0.0.128'
+        dst_mask: '255.255.255.128'
+        dst_port: '2222'
+
+</code></pre>
+
+<p>As a subject matter expert of the underlying network infrastructure, this playbook is easy to read and I should be able to run this against all my devices to get an output that looks like :</p>
+
+<pre><code class="language-bash">TASK [ios_check_acls : DISPLAY MATCH] ***************************************************************************************************************************************
+ok: [rtr1] =&gt; {
+    "output.result": [
+        {
+            "ace_action": "permit",
+            "ace_name": "PERMIT-ALL",
+            "ace_number": "10",
+            "rule_match": "any -&gt; any:"
+        }
+    ]
+}
+ok: [rtr2] =&gt; {
+    "output.result": "No match found"
+}
+ok: [rtr3] =&gt; {
+    "output.result": [
+        {
+            "ace_action": "permit",
+            "ace_name": "TESTER",
+            "ace_number": "10",
+            "rule_match": "10.100.100.0 0.0.0.127 -&gt; 3.0.0.0 0.255.255.255:"
+        }
+    ]
+}
+ok: [rtr4] =&gt; {
+    "output.result": "No match found"
+}
+
+
+</code></pre>
+
+<blockquote>
+  <p>Note how there is no match found on routers <strong>rtr2</strong> and <strong>rtr4</strong>. Also note how more permissive ACLs are accounted for.</p>
+</blockquote>
+
+<p>This is precisely what the Ansible <code>network-engine</code> role enables. Let’s break down this playbook to understand what is happening here - a ‘who does what’ visual:</p>
+
+<p><img src="/assets/playbook_flow.png" alt="" /></p>
+
+<ul>
+  <li>The playbook is simple and is written by the network SME. This playbook is uncomplicated, easy to read and revisit.</li>
+  <li>The <code>ios_check_acls</code>  is a “network function” role and is written by advanced Ansible developers (possibly value added re-sellers, vendors, independent community developers etc).</li>
+  <li>The <code>ios_check_acls</code> calls a “provider” role - <code>ios</code>. This role is written by advanced Ansible developers and potentially functions as an abstraction layer for Cisco IOS device commands, like parsing command output, loading declarative configuration etc. This abstraction allows role developers to use core modules from within Ansible to build opinionated automation tasks</li>
+  <li>The <code>ios</code> role calls the “network-engine” role which provides core functionality like command parsing.</li>
+</ul>
+
+<h3 id="a-deeper-dive-into-the-roles">A deeper dive into the roles</h3>
+
+<p>The directory structure of the resulting playbook looks as follows:</p>
+
+<p><img src="/assets/dir_layout.png" alt="" /></p>
+
+<blockquote>
+  <p><code>check_access.yaml</code> is the playbook written by the network SME.</p>
+</blockquote>
+
+<p>Keep in mind that the network SME has simply downloaded the necessary role from <a href="https://galaxy.ansible.com">‘ansible-galaxy’</a> into that <code>roles</code> directory. The dependency definitions within the role will automatically install all the other roles needed, freeing the user from having to worry about installing them.</p>
+
+<p>What does this network function role look like?</p>
+
+<p><img src="/assets/role_dir.png" alt="" /></p>
+
+<p>This should look familiar. The role has been implemented using custom modules, templates and a tasks. Herein lies the advantage of using this construct - module developers, vendors, value added re-sellers and other community contributors are now easily able to push opinionated roles into Ansible galaxy, building up on existing provider roles. This makes pushing out custom modules a lot faster as well.</p>
+
+<p>The full source code for this demo is available within the <a href="https://github.com/termlen0/network-engine-roledemo"> network-engine-roledemo github repo</a>.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>The introduction of the Ansible network-engine and the push towards creating “network function” roles makes the end user - the network SME’s life a lot easier. Installing tried and tested roles that address majority use cases will make writing network automation playbooks a breeze. This will enable the adoption of netDevOps like never before.</p>
+
+<p>While the roles themselves might be complex to write, keep the end user in mind. As a network engineer do I really care whether <code>YAML</code> is or is not a programming language? Does it matter if logic and loops are implemented in the construction of roles? As an end-user if I can get  <strong>supported</strong>, best-practices based roles that make my life easier and allows me to focus on higher value outcomes for my business, I’d rather leave the debate to the pedantic folks out there and get stuff done.</p>
+
+<blockquote>
+  <p>BTW, you can install a working copy of the role in this example as follows:</p>
+</blockquote>
+
+<pre><code class="language-bash">ansible-galaxy install termlen0.ios_check_acls 
+</code></pre>
+
+<p>There really is no easy button but Ansible network-engine and network function roles make it one step easier for the folks in the trenches.</p>
+
+<p>As always, I’d love to hear your thoughts and opinions about this direction. What do you think?</p>
+
+:ET

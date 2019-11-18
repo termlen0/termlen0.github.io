@@ -116,6 +116,27 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2019/11/16/observations/">
+        Ansible Custom Inventory Plugin - a quick start
+      </a>
+    </h1>
+
+    <span class="post-date">16 Nov 2019</span>
+
+    <p>This post shows you how to write a custom inventory plugin for Ansible. As usual, this is not a deep dive. If you are interested about what inventory plugins are or why you might want to use them. Please see <a href="https://docs.ansible.com/ansible/latest/plugins/inventory.html">the Ansible docs</a>. Additionally for an in-depth understanding of inventories in general and inventory plugins in particular I highly recommend these videos:</p>
+
+<ol>
+  <li><a href="https://www.ansible.com/ansible-inventory-for-fun-and-profit">Ansible inventory for fun and profit</a> by <a href="https://twitter.com/mattdavispdx">@Matt Davis</a></li>
+  <li><a href="https://www.ansible.com/managing-meaningful-inventories">Managing Meaningful Inventories</a> by <a href="https://twitter.com/WillTome">@Will Tome</a> and <a href="https://github.com/alancoding">@Alan Rominger</a></li>
+</ol>
+
+<p>Finally, this post describes <em>my</em> workflow while building custom inventory plugins. This post is better consumed as a “do-it-along”.</p>
+
+    <a href="/2019/11/16/observations/"> Read more </a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2019/06/08/observations/">
         Custom credentials in Ansible Tower to store Github private keys
       </a>
@@ -123,9 +144,7 @@
 
     <span class="post-date">08 Jun 2019</span>
 
-    <p>This post shows you how to add a custom credential in Ansible Tower, that stores SSH private keys. I won&#39;t dive into what custom credentials are and how to get started with them because it is brilliantly covered in this &quot;Inside Playbook&quot; https://www.ansible.com/blog/ansible-Tower-feature-spotlight-custom-credentials by <a href="https://twitter.com/bill_nottingham">@bill_nottingham</a></p>
-
-<p>[WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not</p>
+    <p>This post shows you how to add a custom credential in Ansible Tower, that stores SSH private keys. I won’t dive into what custom credentials are and how to get started with them because it is brilliantly covered in this “Inside Playbook” https://www.ansible.com/blog/ansible-Tower-feature-spotlight-custom-credentials by <a href="https://twitter.com/bill_nottingham">@bill_nottingham</a></p>
 
     <a href="/2019/06/08/observations/"> Read more </a>
   </div>
@@ -139,9 +158,10 @@
 
     <span class="post-date">30 Jul 2018</span>
 
-    <p>Last week at Networking field day (<a href="http://techfieldday.com/event/nfd18/">NFD18</a>), Peter Sprygada (<a href="https://twitter.com/privateip">@privateip</a>) gave a fantastic presentation about the problems in network automation and new initiatives from Ansible to help network and automation engineers. </p>
+    <p>Last week at Networking field day (<a href="http://techfieldday.com/event/nfd18/">NFD18</a>), Peter Sprygada (<a href="https://twitter.com/privateip">@privateip</a>) gave a fantastic presentation about the problems in network automation and new initiatives from Ansible to help network and automation engineers.</p>
 
 <p>In short - network automation teams are recreating similar Ansible playbooks since most of us have similar problems to solve. For instance, adding an application to the datacenter will require creation of VLANS, extending them over port channels, creating STP priorities etc. The Ansible network-engine strives to provide pre-canned, opinionated (meaning best-practices) roles that will make automation easier to kick start and reuse across most teams.</p>
+
 
     <a href="/2018/07/30/observations/"> Read more </a>
   </div>
@@ -157,14 +177,15 @@
 
     <p>In <a href="https://termlen0.github.io/2018/06/26/observations/">Part 1</a> of this 2 part series, I illustrated how to invoke the <code>command_parser</code> module using the <code>network-engine</code> role from Ansible. I then used it to illustrate how to build a simple parser, leveraging regex to convert unstructured device command output to structured data.</p>
 
-<p>In this post, I&#39;ll build on it, highlighting the command parser options that makes wrangling <em>any</em> complex device output into structured output. In particular this post will deep-dive into the following directives:</p>
+<p>In this post, I’ll build on it, highlighting the command parser options that makes wrangling <em>any</em> complex device output into structured output. In particular this post will deep-dive into the following directives:</p>
 
 <ul>
-<li><code>pattern_group</code></li>
-<li><code>extend</code></li>
+  <li><code>pattern_group</code></li>
+  <li><code>extend</code></li>
 </ul>
 
 <p><strong>The playbook and complete parser is available in <a href="https://github.com/termlen0/parser_demo">this git repo.</a></strong></p>
+
 
     <a href="/2018/07/15/observations/"> Read more </a>
   </div>
@@ -178,44 +199,27 @@
 
     <span class="post-date">26 Jun 2018</span>
 
-    <h3>A very brief introduction</h3>
+    <h3 id="a-very-brief-introduction">A very brief introduction</h3>
 
-<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands - commands that network engineers know and love, that are &quot;pretty&quot; formatted but not structured. </p>
+<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands - commands that network engineers know and love, that are “pretty” formatted but not structured.</p>
 
 <p>Until recently, I had only used <a href="https://github.com/google/textfsm">TextFSM</a> to do this. While TextFSM works, it has a significant learning curve, IMO. Last week I decided to give the <code>command_parser</code> module a spin and right off the bat my impressions were:</p>
 
 <ol>
-<li><p>If you are already comfortable using Ansible, you will feel at home working with the command parser</p></li>
-<li><p>The learning curve is much shorter without needing to worry about learning another domain specific language</p></li>
+  <li>
+    <p>If you are already comfortable using Ansible, you will feel at home working with the command parser</p>
+  </li>
+  <li>
+    <p>The learning curve is much shorter without needing to worry about learning another domain specific language</p>
+  </li>
 </ol>
 
 <blockquote>
-<p>Note: This is in no way pitting one against the other. <strong>network-engine</strong> provides a <strong>textfsm_parser</strong> as well as the <strong>command_parser</strong></p>
+  <p>Note: This is in no way pitting one against the other. <strong>network-engine</strong> provides a <strong>textfsm_parser</strong> as well as the <strong>command_parser</strong></p>
 </blockquote>
 
+
     <a href="/2018/06/26/observations/"> Read more </a>
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/2018/03/19/observations/">
-        Please reverse mentor your managers
-      </a>
-    </h1>
-
-    <span class="post-date">19 Mar 2018</span>
-
-    <p><em>&quot;Everybody automate everything, now!&quot;</em> - Enterprise CTO (who just got back from a industry networking event)</p>
-
-<p><em>&quot;I wish my management would help bring in some of this cool network automation stuff I am learning from my peers online&quot;</em> - Network engineer</p>
-
-<p>I&#39;ve heard these comments from numerous organizations; often from CTOs and engineers within the same organization. So if the topmost level of the management is laying down goals to automate &quot;everything&quot; and the engineers themselves are excited to make it happen, why is there a gap?</p>
-
-<p><img src="/assets/middle_mgmt.png" alt=""></p>
-
-<p>So are middle managers the problem? Across organizations, middle mangers could be senior network engineers who have advanced to a point where there is no technical growth path. They have become comfortable managing a team of network engineers and know how to hire network talent. The automation space is filled with technical jargon and buzzwords that are new (and therefore scary). Coming from a technical background fear of the unknown can be unnerving. </p>
-
-    <a href="/2018/03/19/observations/"> Read more </a>
   </div>
   
 </div>

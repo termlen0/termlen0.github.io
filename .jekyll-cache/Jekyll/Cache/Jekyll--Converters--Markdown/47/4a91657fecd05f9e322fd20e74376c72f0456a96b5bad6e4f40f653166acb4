@@ -1,0 +1,2 @@
+I"�<p>This post shows you how to add a custom credential in Ansible Tower, that stores SSH private keys. I won’t dive into what custom credentials are and how to get started with them because it is brilliantly covered in this “Inside Playbook” https://www.ansible.com/blog/ansible-Tower-feature-spotlight-custom-credentials by <a href="https://twitter.com/bill_nottingham">@bill_nottingham</a></p>
+:ET

@@ -1,0 +1,14 @@
+I"N<p>Obvious!</p>
+
+<p>Recently I was working on  YANG device models, using NETCONF to
+interact with the actual device (NXOS 7.0.3.I6.1). I was using
+Cisco’s
+<a href="http://www.cisco.com/c/en/us/td/docs/switches/datacenter/nexus9000/sw/7-x/programmability/guide/b_Cisco_Nexus_9000_Series_NX-OS_Programmability_Guide_7x/b_Cisco_Nexus_9000_Series_NX-OS_Programmability_Guide_7x_chapter_010100.html">NX-OS Programmability Guide</a> for
+the 7.x version. I have had previous experience working with
+YANG and Cisco’s NEDs through the tail-f/NSO product and was feeling
+quite confident in my understanding of how YANG is being used for
+modeling (Either a service or a device) and how NETCONF was one of the
+protocols used to interact with the model. 
+However, I was getting lost trying to navigate the NXOS’s YANG model
+over the NETCONF client.</p>
+:ET

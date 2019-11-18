@@ -1,0 +1,179 @@
+I"�!<p>This post shows you how to add a custom credential in Ansible Tower, that stores SSH private keys. I won’t dive into what custom credentials are and how to get started with them because it is brilliantly covered in this “Inside Playbook” https://www.ansible.com/blog/ansible-Tower-feature-spotlight-custom-credentials by <a href="https://twitter.com/bill_nottingham">@bill_nottingham</a>
+<!--more--></p>
+
+<h3 id="my-use-case">My use case</h3>
+
+<p>One of the roles in my playbook involves cloning a private git repo. For this, I use the Ansible <a href="https://docs.ansible.com/ansible/latest/modules/git_module.html">git </a> module. Since this is a private repo, I cannot use the <strong>https</strong> URL, since doing so, my playbook will always require human input. Running the following playbook:</p>
+
+<pre><code class="language-yaml">---
+- name: DEMO AN INTERACTIVE PRIVATE KEY
+  hosts: localhost
+  gather_facts: no
+  tasks:
+
+    - name: CLONE THE GIT REPO
+      git:
+        repo: https://github.com/termlen0/test_repo.git
+        dest: /tmp/my_test_repo
+
+</code></pre>
+<p>…will result in the following output:</p>
+
+<pre><code class="language-bash">[ec2-user@ip-10-0-0-194 tmp]$ ansible-playbook demo_interactive_private_key.yml 
+ [WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not
+match 'all'
+
+
+PLAY [DEMO AN INTERACTIVE PRIVATE KEY] *****************************************************************************
+
+TASK [CLONE THE GIT REPO] ******************************************************************************************
+Username for 'https://github.com': 
+
+
+
+</code></pre>
+
+<p>…where the playbook is waiting on my interactive response</p>
+
+<h3 id="solving-using-a-ssh-key-pair">Solving using a SSH key pair</h3>
+
+<p>This situation is easily remedied by switching from the <strong>https</strong> to a <strong>ssh</strong> url and then using the SSH key pair registered with github.</p>
+
+<pre><code class="language-yaml">---
+- name: DEMO AN INTERACTIVE PRIVATE KEY
+  hosts: localhost
+  gather_facts: no
+  tasks:
+
+    - name: CLONE THE GIT REPO
+      git:
+        repo: git@github.com:termlen0/test_repo.git
+        dest: /tmp/my_test_repo
+        key_file: ./my_private_key
+
+</code></pre>
+
+<h3 id="moving-this-solution-to-ansible-tower">Moving this solution to Ansible Tower</h3>
+
+<p>To move this playbook to my central Tower server, I need to take a different approach because I don’t want my private key to be on the Tower file system. 
+One option is to define a custom credential and supply my private key through this credential. Custom credentials come in handy when you want to inject sensitive data as extra vars or environment variables into your playbook (exhaustive details <a href="https://docs.ansible.com/ansible-Tower/latest/html/userguide/credential_types.html">here</a>)</p>
+
+<p>Let’s dive right into it. The work flow I use is as follows:</p>
+
+<pre><code>1. First we create a new credential type
+
+2. Then, add new credential(s) using this custom credential 
+
+3. Invoke the credential from the job template
+</code></pre>
+
+<h4 id="1-create-a-new-credential-type">1. Create a new credential type</h4>
+
+<p>As a Tower admin, you can create a custom credential by clicking on <em>ADMINISTRATION&gt; Credential Types</em></p>
+
+<p><a href="/assets/custom_cred1.png"><img src="/assets/custom_cred1.png" alt="" /></a></p>
+
+<p>Here, I’ve created a new credential type and I’ve named it <strong>PRIVATE KEY CRED</strong>. Custom credentials are defined using 2 components :</p>
+
+<pre><code>1. Input Configuration
+
+2. Injector Configuration
+</code></pre>
+
+<p>Simply put, the input configuration is where you will define the characteristics/attributes of the custom credential you are defining. In my case:</p>
+
+<pre><code class="language-yaml">fields:
+  - id: my_private_key
+    type: string
+    label: private_key
+    secret: true
+    multiline: true
+</code></pre>
+
+<p>The <code>secret: true</code> will make sure that the data stored in this credential will be encrypted at rest and <code>multiline: true</code> will accommodate for private keys, which typically contain multiple lines.</p>
+
+<p>The <em>Injector Configuration</em> section, is how the data contained in the custom credential will be <strong>injected</strong> into our playbook. Let’s break this down for my example:</p>
+
+<pre><code class="language-yaml">file:
+  template.my_key: "{{ my_private_key  }}"
+extra_vars:
+  secret_key: "{{ tower.filename.my_key  }}"
+
+</code></pre>
+
+<p>The <code>file</code> parameter tells us that the string data of the <code>my_private_key</code> custom credential id will be stored as a temporary file. The <code>template.my_key</code> is how Tower will reference this file, using the identifier <code>my_key</code>. So now, at this point the data collected from the input field is going to be stored as a temporary file that Tower can reference using <code>my_key</code>.</p>
+
+<p>The next part is <code>extra_vars</code>. Here, I am configuring the injector to pass the data into the playbook as an extra var. The extra var name is  <code>secret_key</code> and the value of this variable will be the temporary file referenced by Tower as <code>my_key</code>. This will be clear further down when we debug this variable within our playbook.</p>
+
+<blockquote>
+  <p>In other words <em>tower.filename</em> is not user defined, whereas <em>my_key</em> is.</p>
+</blockquote>
+
+<p>Ok, now onto using this brand new custom credential that we just created!</p>
+
+<h4 id="2-add-new-credentials">2. Add new credentials</h4>
+
+<p>This step should look familiar to Tower/AWX users. Create a new credential by choosing the <em>RESOURCES &gt; Credentials</em> option from the sidebar:</p>
+
+<p><a href="/assets/custom_cred2.png"><img src="/assets/custom_cred2.png" alt="" /></a></p>
+
+<blockquote>
+  <p>After saving the private key is encrypted and stored securely on Tower.</p>
+</blockquote>
+
+<p>Repeat this step for as many users as needed that will be using the github repo.</p>
+
+<h4 id="3-invoke-the-custom-credential-from-the-job-template">3. Invoke the custom credential from the job template</h4>
+
+<p>This step is where it all comes together. So first, let’s update our playbook so that we can take advantage of the custom credential that’s being injected as an <em>extra var</em>:</p>
+
+<pre><code class="language-yaml">---
+- name: DEMO AN INTERACTIVE PRIVATE KEY
+  hosts: localhost
+  gather_facts: no
+  tasks:
+
+    - name: DISPLAY THE INJECTED EXTRA VAR
+      debug:
+        var: secret_key
+
+    - name: CLONE THE GIT REPO
+      git:
+        repo: git@github.com:termlen0/test_repo.git
+        dest: /tmp/my_test_repo
+        key_file: "{{ secret_key  }}"
+      delegate_to: localhost
+
+</code></pre>
+
+<blockquote>
+  <p>Recall that in step 1, we are injecting the private key as a variable named <em>secret_key</em></p>
+</blockquote>
+
+<p>Great, now let’s add a job template that ties this playbook and our custom credential together:</p>
+
+<p><a href="/assets/custom_cred3.png"><img src="/assets/custom_cred3.png" alt="" /></a></p>
+
+<p>Note how I have the credential to be <strong>PROMPT ON LAUNCH</strong>? For my use case, I’d like others in my org to be able to interact with this private github repo. Selecting the <strong>PROMPT ON LAUNCH</strong> enables each individual to use their own private ssh key through the custom credentials we discussed above.</p>
+
+<p>When I launch the template, I am prompted to choose a credential type. I choose the custom credential we created <strong>PRIVATE KEY CRED</strong>. Which then lists the available private keys of this type.</p>
+
+<p><a href="/assets/custom_cred4.png"><img src="/assets/custom_cred4.png" alt="" /></a></p>
+
+<blockquote>
+  <p>Use the powerful Tower RBAC to restrict who can use which credentials.</p>
+</blockquote>
+
+<p>Finally, launching the template results in the repo being cloned as expected:</p>
+
+<p><a href="/assets/custom_cred5.png"><img src="/assets/custom_cred5.png" alt="" /></a></p>
+
+<p>Note the contents of the <strong>secret_key</strong> variable in the play output. It references the temporary file that the custom credential creates (and deletes after the play execution), containing my private key details.</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>Hopefully this post helps folks who are trying to figure out how to deal with SSH keys and Github connectivity. Please let me know if you have questions through the comments/social media.</p>
+
+<p>If you have solved this in Tower using a different method, I’d love to hear how you did it as well.</p>
+
+:ET

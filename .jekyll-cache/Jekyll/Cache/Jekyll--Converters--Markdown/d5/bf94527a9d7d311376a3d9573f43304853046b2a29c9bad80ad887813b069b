@@ -1,0 +1,311 @@
+I"A3<h3 id="a-very-brief-introduction">A very brief introduction</h3>
+
+<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands - commands that network engineers know and love, that are “pretty” formatted but not structured.</p>
+
+<p>Until recently, I had only used <a href="https://github.com/google/textfsm">TextFSM</a> to do this. While TextFSM works, it has a significant learning curve, IMO. Last week I decided to give the <code>command_parser</code> module a spin and right off the bat my impressions were:</p>
+
+<ol>
+  <li>
+    <p>If you are already comfortable using Ansible, you will feel at home working with the command parser</p>
+  </li>
+  <li>
+    <p>The learning curve is much shorter without needing to worry about learning another domain specific language</p>
+  </li>
+</ol>
+
+<blockquote>
+  <p>Note: This is in no way pitting one against the other. <strong>network-engine</strong> provides a <strong>textfsm_parser</strong> as well as the <strong>command_parser</strong></p>
+</blockquote>
+
+<!--more-->
+
+<p>My intention through the 2 part blog, is to write about how to build command parser templates using 2 examples. I hope it will help others and will serve as a reference when I need it later.</p>
+
+<p>However, first thing first - The official documentation is available here: <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md">command parser directives</a></p>
+
+<h3 id="diving-in-parsing-the-output-of-show-ip-interfaces-brief-on-a-cisco-ios-device">Diving in: parsing the output of <code>show ip interfaces brief</code> on a Cisco IOS device</h3>
+
+<p>Rather than reiterate what is in the documentation, lets dive in with an example. We’ll start off with the playbook that captures the output of the <code>show ip interfaces brief</code> command.</p>
+
+<pre><code class="language-yaml">---
+- name: GENERATE A REPORT
+  hosts: cisco
+  gather_facts: no
+  connection: network_cli
+
+  roles:
+    - ansible-network.network-engine
+
+  tasks:
+  - name: CAPTURE SHOW IP INTERFACE
+    ios_command:
+      commands:
+        - show ip interface brief
+    register: output
+    
+  - name: DISPLAY THE OUTPUT
+    debug: var=output.stdout
+
+</code></pre>
+
+<p>This should hopefully look familiar to folks who are used to using Ansible for working with network devices. Pay attention to the</p>
+
+<pre><code class="language-yaml">  roles:
+    - ansible-network.network-engine
+
+</code></pre>
+
+<p>This is the role that provides the <code>command_parser</code> library that we will be working with. This role can be downloaded and installed as per instructions in the links above.</p>
+
+<p>On running the playbook (and limiting it to a single device):</p>
+
+<pre><code class="language-shell">PLAY [GENERATE A REPORT ] ***************************************************************************
+
+TASK [CAPTURE SHOW IP INTERFACE] ****************************************************************************
+ok: [rtr1]
+
+TASK [DISPLAY THE OUTPUT] *****************************************************************************************************************************************************************************************
+ok: [rtr1] =&gt; {
+    "output.stdout": [
+        "Interface              IP-Address      OK? Method Status                Protocol\nGigabitEthernet1       172.16.244.50   YES DHCP   up                    up      \nLoopback0              192.168.1.101   YES manual up                    up      \nLoopback1              10.1.1.101      YES manual administratively down down    \nTunnel0                10.100.100.1    YES manual up                    up      \nTunnel1                10.200.200.1    YES manual up                    up      \nVirtualPortGroup0      192.168.35.101  YES TFTP   up                    up"
+    ]
+}
+
+PLAY RECAP ********************************************************************************************************************************************************************************************************
+rtr1                       : ok=2    changed=0    unreachable=0    failed=0  
+
+
+</code></pre>
+
+<p>So far so good. We got the output of the show command. Now we can send this “blob” of text to a command parser that can create structured data from it.</p>
+
+<pre><code class="language-yaml">
+---
+- name: DYNAMIC REPORTING PART
+  hosts: cisco
+  gather_facts: no
+  connection: network_cli
+
+  roles:
+    - ansible-network.network-engine
+
+  tasks:
+  - name: CAPTURE SHOW IP INTERFACE
+    ios_command:
+      commands:
+        - show ip interface brief
+    register: output
+
+  - name: DISPLAY THE OUTPUT
+    debug: var=output.stdout
+
+  - name: PARSE THE RAW OUTPUT
+    command_parser:
+      file: "parsers/ios/show_ip_interface_brief.yaml"
+      content: "{{ output.stdout[0] }}"
+
+
+
+
+</code></pre>
+
+<p>Now, we get into the meat of this blog. Using the <code>command_parser</code> module.</p>
+
+<h3 id="writing-our-first-parser">Writing our first parser</h3>
+
+<p>This is my workflow for creating a new parser:</p>
+
+<ol>
+  <li>
+    <p>Identify the regular expression/expressions needed to collect the data using regex101.com</p>
+  </li>
+  <li>
+    <p>Use the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md">parser directives</a> to test out the regular expression</p>
+  </li>
+  <li>
+    <p>Iterate and refine</p>
+  </li>
+</ol>
+
+<p>So let’s begin with creating the regular expression. Let’s say we want to capture the <em>Interface name, IP address, Admin state and Protocol State</em> . The following regular expression is what I came up with:</p>
+
+<pre><code>^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively down).*(up|down)
+</code></pre>
+
+<p>On to step 2 testing this. The parser file defined by</p>
+
+<pre><code class="language-yaml">      file: "parsers/ios/show_ip_interface_brief.yaml"
+
+</code></pre>
+
+<p>is a YAML file.</p>
+
+<pre><code class="language-yaml">---
+- name: PARSER META DATA
+  parser_metadata:
+    version: 1.0
+    command: show ip interface brief
+    network_os: ios
+
+- name: MATCH PATTERN
+  pattern_match:
+    regex: "^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively down).*(up|down)"
+    match_all: yes
+  register: section
+  export: yes
+
+</code></pre>
+
+<p>Here we are using the <code>pattern_match</code> directive. The regex is now applied to the blob of input passed in from the playbook task. The match groups are collected and stored into the variable called <code>section</code>. We use the <code>match_all</code> option in order to match all the capture groups.</p>
+
+<p>Note the use of the <code>export: yes</code>. Without this directive the variable and value contained will not be sent back to the playbook for further processing.</p>
+
+<blockquote>
+  <p>As part of our development of the parser we might have to use the <code>export: yes</code> at multiple stages.</p>
+</blockquote>
+
+<p>In order to test this, re-run the playbook but in <code>verbose</code> mode:</p>
+
+<pre><code class="language-shell">
+TASK [PARSE THE RAW OUTPUT] ***************************************************************************************************************************************************************************************
+ok: [rtr1] =&gt; {"ansible_facts": {"section": [{"matches": ["GigabitEthernet1", "172.16.244.50", "up", "up"]}, {"matches": ["Loopback0", "192.168.1.101", "up", "up"]}, {"matches": ["Loopback1", "10.1.1.101", "administratively down", "down"]}, {"matches": ["Tunnel0", "10.100.100.1", "up", "up"]}, {"matches": ["Tunnel1", "10.200.200.1", "up", "up"]}, {"matches": ["VirtualPortGroup0", "192.168.35.101", "up", "up"]}]}, "changed": false, "included": ["parsers/ios/show_ip_interface_brief.yaml"]}
+
+PLAY RECAP ********************************************************************************************************************************************************************************************************
+rtr1                       : ok=2    changed=0    unreachable=0    failed=0   
+
+</code></pre>
+
+<p>Great! We can already see the data being returned as list of dictionaries. Now within the command parser you have the option of cleaning up and presenting this data as a structured <code>json</code> object. Let’s do that as the next step using the <code>json_template</code> directive:</p>
+
+<pre><code class="language-yaml">
+---
+- name: PARSER META DATA
+  parser_metadata:
+    version: 1.0
+    command: show ip interface brief
+    network_os: ios
+
+- name: MATCH PATTERN
+  pattern_match:
+    regex: "^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively down).*(up|down)"
+    match_all: yes
+  register: section
+
+- name: GENERATE JSON DATA STRUCTURE
+  json_template:
+    template:
+      - key: "{{ item.matches.0 }}"
+        object:
+        - key: data
+          object:
+            - key: name
+              value: "{{ item.matches.0 }}"
+            - key: ip
+              value: "{{ item.matches.1 }}"
+            - key: admin_state
+              value: "{{ item.matches.2 }}"
+            - key: protocol_state
+              value: "{{ item.matches.3 }}"
+  loop: "{{ section }}"
+  export: yes
+  register: ip_interface_facts
+
+
+</code></pre>
+
+<p>The previous match was registered into a variable called <code>section</code>. This is a list as seen from the verbose output above. This list can be looped over to work on individual elements using the <code>loop</code> directive. The <code>json_template</code> directive is used to define a nested dictionary with the key of each element being the name of the interface in this example.</p>
+
+<blockquote>
+  <p>Note: The <strong>export: yes</strong> has been moved from the <strong>section</strong> variable to the <strong>ip_interface_facts</strong> variable.</p>
+</blockquote>
+
+<p>Once exported the variable becomes available within the playbook and can be used just like any other variable in Ansible. Let’s go ahead and display this using <code>debug</code>:</p>
+
+<pre><code class="language-yaml">
+---
+- name: DYNAMIC REPORTING PART
+  hosts: cisco
+  gather_facts: no
+  connection: network_cli
+
+  roles:
+    - ansible-network.network-engine
+
+  tasks:
+  - name: CAPTURE SHOW IP ROUTE
+    ios_command:
+      commands:
+        - show ip interface brief
+    register: output
+
+  - name: PARSE THE RAW OUTPUT
+    command_parser:
+      file: "parsers/ios/show_ip_interface_brief.yaml"
+      content: "{{ output.stdout[0] }}"
+
+  - name: DISPLAY THE DATA
+    debug: var=ip_interface_facts
+    
+
+
+</code></pre>
+
+<p>Now when we run the playbook:</p>
+
+<pre><code class="language-shell">TASK [DISPLAY THE DATA] *******************************************************************************************************************************************************************************************
+ok: [rtr1] =&gt; {
+    "ip_interface_facts": [
+        {
+            "GigabitEthernet1": {
+                "data": {
+                    "admin_state": "up", 
+                    "ip": "172.16.244.50", 
+                    "name": "GigabitEthernet1", 
+                    "protocol_state": "up"
+                }
+            }
+        }, 
+        {
+            "Loopback0": {
+                "data": {
+                    "admin_state": "up", 
+                    "ip": "192.168.1.101", 
+                    "name": "Loopback0", 
+                    "protocol_state": "up"
+                }
+            }
+        }, 
+        {
+            "Loopback1": {
+                "data": {
+                    "admin_state": "administratively down", 
+                    "ip": "10.1.1.101", 
+                    "name": "Loopback1", 
+                    "protocol_state": "down"
+                }
+            }
+        }, 
+        {
+            "Tunnel0": {
+                "data": {
+                    "admin_state": "up", 
+                    "ip": "10.100.100.1", 
+                    "name": "Tunnel0", 
+.
+.
+.
+.
+.
+&lt;output omitted for brevity&gt;
+</code></pre>
+
+<p>Now, wasn’t that easy!! At least I think it was a lot easier to work with personally than TextFSM.</p>
+
+<p>In part 2 of the blog series we will build a command parser for the <code>show interfaces</code> command on IOS devices. This will be a little more complex than the example in part 1 and will hopefully help demonstrate how really powerful the <code>command_parser</code> module is.</p>
+
+<p><em>Twitter:</em> <a href="https://twitter.com/intent/tweet?url=http://localhost:4000/2018/06/26/observations/&amp;text=Part1 of a 2 part blog on using the Ansible network-engine's command parser&amp;via=termlen0" target="_blank"> Share it with your followers</a> 
+or 
+<a href="https://twitter.com/termlen0">
+  Follow me on Twitter</a>!</p>
+
+:ET

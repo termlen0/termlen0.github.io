@@ -126,85 +126,85 @@ clear text, locally, indefinitely. I came across this stackoverflow
 I adapted for Linux. The concept is as follows:</p>
 
 <ol>
-<li>Use a .netrc file to store your credentials. This follows the
-  file format for <a href="https://www.ibm.com/support/knowledgecenter/SSB27U_6.2.0/com.ibm.zvm.v620.kijl0/netrcd.htm#netrcd">netrc</a></li>
-<li>Encrypt this file,
-  using <a href="https://www.gnupg.org/">GNU Privacy Guard</a>
-&lt;!--more--&gt;</li>
-<li>Download and add the
-  <a href="https://raw.githubusercontent.com/git/git/master/contrib/credential/netrc/git-credential-netrc">git credential helper script</a> to
-  your path.</li>
-<li>Update git config to tell it to use the encrypted credentials file</li>
+  <li>Use a .netrc file to store your credentials. This follows the
+file format for <a href="https://www.ibm.com/support/knowledgecenter/SSB27U_6.2.0/com.ibm.zvm.v620.kijl0/netrcd.htm#netrcd">netrc</a></li>
+  <li>Encrypt this file,
+using <a href="https://www.gnupg.org/">GNU Privacy Guard</a>
+<!--more--></li>
+  <li>Download and add the
+<a href="https://raw.githubusercontent.com/git/git/master/contrib/credential/netrc/git-credential-netrc">git credential helper script</a> to
+your path.</li>
+  <li>Update git config to tell it to use the encrypted credentials file</li>
 </ol>
 
-<h3>STEP 1: The .netrc file</h3>
-
+<h3 id="step-1-the-netrc-file">STEP 1: The .netrc file</h3>
 <p>As described in the link above, the .netrc file follows a standard and
-looks like this: <a href="/assets/gpg3.png"><img src="/assets/gpg3.png" alt=""></a></p>
+looks like this: <a href="/assets/gpg3.png"><img src="/assets/gpg3.png" alt="" /></a></p>
 
 <p>We save this in our home directory - this is obviously clear-text. We will now
 encrypt the file and delete the clear-text one</p>
 
-<h3>STEP 2: Encrypt the .netrc file</h3>
-
+<h3 id="step-2-encrypt-the-netrc-file">STEP 2: Encrypt the .netrc file</h3>
 <p>GNU Privacy Guard, was new to me. Solving this specific problem also
 taught me about how to use GPG in general to sign and encrypt any
 piece of data that needs to be exchanged securely. The basic premise
 is we create a public/private key pair, similar to SSH. This is stored
-in a &quot;key-ring&quot; on our computer. We can potentially add other trusted
+in a “key-ring” on our computer. We can potentially add other trusted
 public-keys to this key-ring and decrypt/verify files that are signed
-by the sender&#39;s private key.
+by the sender’s private key.
 For our example, here is how I did it:</p>
 
 <p><em>GENERATE THE KEY PAIRS</em></p>
 
-<p><a href="/assets/gpg1.png"><img src="/assets/gpg1.png" alt=""></a></p>
+<p><a href="/assets/gpg1.png"><img src="/assets/gpg1.png" alt="" /></a></p>
 
 <p><em>After moving the mouse around for a bit:</em></p>
 
-<p><a href="/assets/gpg2.png"><img src="/assets/gpg2.png" alt=""></a></p>
+<p><a href="/assets/gpg2.png"><img src="/assets/gpg2.png" alt="" /></a></p>
 
 <p><em>You can see the keyring :</em></p>
 
-<p><a href="/assets/gpg4.png"><img src="/assets/gpg4.png" alt=""></a></p>
+<p><a href="/assets/gpg4.png"><img src="/assets/gpg4.png" alt="" /></a></p>
 
 <p><em>Now we can use our private key to encrypt the .netrc file</em></p>
 
-<p><a href="/assets/gpg5.png"><img src="/assets/gpg5.png" alt=""></a></p>
+<p><a href="/assets/gpg5.png"><img src="/assets/gpg5.png" alt="" /></a></p>
 
 <p>(I had to specify a recipient. In our case since github was going to
-use my email id as the &#39;end-user&#39; to decrypt the .netrc file, I
+use my email id as the ‘end-user’ to decrypt the .netrc file, I
 specified it as the recipient)</p>
 
 <p>At this point, you may delete your clear text .netrc and will be left
 with a .netrc.gpg file</p>
 
-<h3>STEP 3: Download and add the git credential helper:</h3>
-
+<h3 id="step-3-download-and-add-the-git-credential-helper">STEP 3: Download and add the git credential helper:</h3>
 <p><a href="https://raw.githubusercontent.com/git/git/master/contrib/credential/netrc/git-credential-netrc">This perl script</a> is
 used by git to unencrypt the .netrc.gpg file. So you will need to make
 it executable and store it in a directory in your <code>$PATH</code>
 variable.</p>
-<div class="highlight"><pre><code class="language-shell" data-lang="shell"><span></span>curl -o /home/ajay/bin/git-credential-netrc https://raw.github.com/git/git/master/contrib/credential/net‌​rc/git-credential-ne‌​trc
-</code></pre></div>
-<h3>STEP 4: Tell git about the encrypted credentials</h3>
 
+<pre><code class="language-shell">curl -o /home/ajay/bin/git-credential-netrc https://raw.github.com/git/git/master/contrib/credential/net‌​rc/git-credential-ne‌​trc
+</code></pre>
+
+<h3 id="step-4-tell-git-about-the-encrypted-credentials">STEP 4: Tell git about the encrypted credentials</h3>
 <p>Finally, you use the git config command to inform git to use the
 credential helper. This is when you also point it to the location of
 the newly encrypted .netrc.gpg file.</p>
-<div class="highlight"><pre><code class="language-shell" data-lang="shell"><span></span>git config --local credential.helper <span class="s2">&quot;netrc -f /home/ajay/.netrc.gpg -v -d&quot;</span>
-</code></pre></div>
+
+<pre><code class="language-shell">git config --local credential.helper "netrc -f /home/ajay/.netrc.gpg -v -d"
+</code></pre>
+
 <p>( The -v and -d are diagnostic flags - verbose/debug. This helps you
 track issues if you run into any. )</p>
 
 <p>If you happen to follow these steps and if you had any questions, I
 would be happy to help and hopefully better my understanding as well.</p>
 
-<p><em>Twitter:</em> <a href="https://twitter.com/intent/tweet?url=http://localhost:4000/2017/04/20/observations/&text=OT - A quick post on using gpg to manage github in Linux&via=termlen0" 
-   target="_blank"> Share it with your followers</a> 
+<p><em>Twitter:</em> <a href="https://twitter.com/intent/tweet?url=http://localhost:4000/2017/04/20/observations/&amp;text=OT - A quick post on using gpg to manage github in Linux&amp;via=termlen0" target="_blank"> Share it with your followers</a> 
 or 
 <a href="https://twitter.com/termlen0">
   Follow me on Twitter</a>!</p>
+
 
 </div>
 <a href="https://twitter.com/share" class="twitter-share-button"
@@ -214,6 +214,15 @@ data-via="termlen0">Tweet</a>
 <div class="related">
   <h2>Related Posts</h2>
   <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2019/11/16/observations/">
+            Ansible Custom Inventory Plugin - a quick start
+            <small>16 Nov 2019</small>
+          </a>
+        </h3>
+      </li>
     
       <li>
         <h3>
@@ -229,15 +238,6 @@ data-via="termlen0">Tweet</a>
           <a href="/2018/07/30/observations/">
             Using Ansible network-engine to simplify network automation tasks
             <small>30 Jul 2018</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
-          <a href="/2018/07/15/observations/">
-            Part2 of a 2 part blog on using the Ansible network-engine's command parser
-            <small>15 Jul 2018</small>
           </a>
         </h3>
       </li>

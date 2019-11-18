@@ -1,0 +1,58 @@
+I"�<p>Last week I deployed my first “at scale” playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
+Like most things though, the devil is in the details. Right off the bat, I ran into “non-ansible” related issues (tacacs/ssh).
+That brought the number of devices to about 270. Not a big number right?
+At the most basic level, yes, if I was simply pushing configs using the ios_config
+module.
+##Breakdown of the playbook</p>
+<ol>
+  <li>Execute a show run on the device and compile a local backup for each device</li>
+  <li>Run a pre-flight report, specific to the interfaces we are going to impact (multiple ssh sessions per host)</li>
+  <li>Build the configs locally</li>
+  <li>Deploy the configs</li>
+  <li>Validate the configs/Unit testing</li>
+</ol>
+
+<!--more-->
+
+<h3 id="a-bit-more-about-the-unit-testing">A bit more about the unit testing:</h3>
+<p>For testing the changes were deployed, I had 2 criteria:</p>
+
+<ol>
+  <li>Assert that the new helpers are present within the interface configurations (of the specific interfaces)</li>
+  <li>Assert that the startup and running config are in sync (in other word, the new config has been saved)</li>
+</ol>
+
+<p>For assertion 1, I took the approach of running a show running interface per interface - this implied multiple ssh sessions per host.</p>
+
+<p>##Observations:</p>
+<ol>
+  <li>Running the playbook for backups result in a lot of SSH connection failures on the first run. Subsequent runs are significantly more successful - Still see some failures</li>
+  <li>Running the playbook for the preflight report/validation, results in ssh timeouts - these are not consistent across hosts: Meaning, for the same host, the show run int
+ for Vlan101 will work but might fail for Vlan201 on the first run, but on the next run, there is no guarantee that a repeat play will reproduce this exact failure</li>
+  <li>My validation role uses dynamic includes like this <a href="https://github.com/termlen0/ansible_dynamic_include_bug_demo">example</a>. Running the playbook with a tag other
+than “validate”, still attempts to load all yaml files and results in failure.</li>
+</ol>
+
+<p>##Tweaks and next steps:</p>
+<ol>
+  <li>I had mixed success with using the “serial” <a href="http://docs.ansible.com/ansible/playbooks_delegation.html#rolling-update-batch-size">option</a>. Needs more trial and error.</li>
+  <li>Rewrite pre-flight and validation scripts to only do a single show run. Collect specific interface details from a local copy</li>
+  <li>Tried pipelining and some other recommendations that seemed relevant based on <a href="https://www.ansible.com/blog/ansible-performance-tuning">this</a>.
+However, it appears to be focussed on using ssh connections to the remote systems. As we know, for the ios_* modules, ansible ssh’es to the local host and then uses paramiko
+within the modules. In short, pipeline did not seem to do much</li>
+  <li>Setting the timeout parameter for the ios_* modules seemed to have no affect on the ssh timeouts.</li>
+  <li>To further understand observation 1 (which is still the most vexing one), I tried connecting to the device using paramiko from the python interpreter and executing
+the same commands. I could not recreate the issue. I had good connectivity each time</li>
+</ol>
+
+<p>##Other issues:
+For observation 3, I opened an <a href="https://github.com/ansible/ansible/issues/19345">issue</a> with ansible. Based on the comments it was closed with, I guess, it is an expected
+behavior. Which means, for any playbook that has dynamic includes, we need to remember to send any variables that role will need, even though your tags may not be calling
+that role.</p>
+
+<p><em>Twitter:</em> <a href="https://twitter.com/intent/tweet?url=http://localhost:4000/2016/12/16/observations/&amp;text=Running ansible at scale&amp;via=termlen0" target="_blank"> Share it with your followers</a> 
+or 
+<a href="https://twitter.com/termlen0">
+  Follow me on Twitter</a>!</p>
+
+:ET

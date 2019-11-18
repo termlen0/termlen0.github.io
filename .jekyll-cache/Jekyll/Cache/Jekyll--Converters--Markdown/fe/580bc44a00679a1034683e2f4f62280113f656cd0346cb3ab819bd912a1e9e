@@ -1,0 +1,20 @@
+I"�<h3 id="a-very-brief-introduction">A very brief introduction</h3>
+
+<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands - commands that network engineers know and love, that are “pretty” formatted but not structured.</p>
+
+<p>Until recently, I had only used <a href="https://github.com/google/textfsm">TextFSM</a> to do this. While TextFSM works, it has a significant learning curve, IMO. Last week I decided to give the <code>command_parser</code> module a spin and right off the bat my impressions were:</p>
+
+<ol>
+  <li>
+    <p>If you are already comfortable using Ansible, you will feel at home working with the command parser</p>
+  </li>
+  <li>
+    <p>The learning curve is much shorter without needing to worry about learning another domain specific language</p>
+  </li>
+</ol>
+
+<blockquote>
+  <p>Note: This is in no way pitting one against the other. <strong>network-engine</strong> provides a <strong>textfsm_parser</strong> as well as the <strong>command_parser</strong></p>
+</blockquote>
+
+:ET

@@ -1,0 +1,12 @@
+I"�<p>When it comes to automation role models, network engineers have often looked up,
+to our compute brethren. For decades, compute admins have had tools that allowed
+them to execute scripts on systems at particular times: typically backups,
+rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
+Ansible, have empowered ‘Developer Administrators’, to stand up the entire app
+stack, automatically.</p>
+
+<p>In my network automation journey, I realized early on that, a big gap/obstacle
+for network automation is the need for a backend, to track positive
+integers; a source of truth, that knows what numeric value was last</p>
+
+:ET

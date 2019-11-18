@@ -1,0 +1,17 @@
+I"�<p>This post is a consequence of an interesting conversation around
+declarative control systems with a colleague. Throughout the
+conversation, we kept coming back to the ‘popularity’ of automation
+and specifically, how revolutionary, it appears for legacy, closed
+systems(aka 80% of network gear in enterprises). When you think about it,
+in a traditional control system (a bread toaster, in it’s simplest
+form), we interact with the system as follows:</p>
+
+<pre><code>1. We tell it (declare) what our desired outcome is (how brown do you
+want your toast)
+2. Inputs (the slices of bread)
+</code></pre>
+
+<p>The system then figures out how to achieve your end state. In other
+words..</p>
+
+:ET

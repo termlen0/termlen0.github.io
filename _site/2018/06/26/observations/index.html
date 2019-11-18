@@ -115,19 +115,23 @@
       <div class="post">
   <h1 class="post-title">Part1 of a 2 part blog on using the Ansible network-engine's command parser</h1>
   <span class="post-date">26 Jun 2018</span>
-  <h3>A very brief introduction</h3>
+  <h3 id="a-very-brief-introduction">A very brief introduction</h3>
 
-<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands - commands that network engineers know and love, that are &quot;pretty&quot; formatted but not structured. </p>
+<p>The <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/README.md">network-engine</a> role was made available through Ansible galaxy recently. One of the modules this role makes available for network engineers, is the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/user_guide/command_parser.md">command parser</a>. As the name implies, command parser enables the user to parse the output of <em>show</em> commands - commands that network engineers know and love, that are “pretty” formatted but not structured.</p>
 
 <p>Until recently, I had only used <a href="https://github.com/google/textfsm">TextFSM</a> to do this. While TextFSM works, it has a significant learning curve, IMO. Last week I decided to give the <code>command_parser</code> module a spin and right off the bat my impressions were:</p>
 
 <ol>
-<li><p>If you are already comfortable using Ansible, you will feel at home working with the command parser</p></li>
-<li><p>The learning curve is much shorter without needing to worry about learning another domain specific language</p></li>
+  <li>
+    <p>If you are already comfortable using Ansible, you will feel at home working with the command parser</p>
+  </li>
+  <li>
+    <p>The learning curve is much shorter without needing to worry about learning another domain specific language</p>
+  </li>
 </ol>
 
 <blockquote>
-<p>Note: This is in no way pitting one against the other. <strong>network-engine</strong> provides a <strong>textfsm_parser</strong> as well as the <strong>command_parser</strong></p>
+  <p>Note: This is in no way pitting one against the other. <strong>network-engine</strong> provides a <strong>textfsm_parser</strong> as well as the <strong>command_parser</strong></p>
 </blockquote>
 
 <!--more-->
@@ -136,243 +140,291 @@
 
 <p>However, first thing first - The official documentation is available here: <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md">command parser directives</a></p>
 
-<h3>Diving in: parsing the output of <code>show ip interfaces brief</code> on a Cisco IOS device</h3>
+<h3 id="diving-in-parsing-the-output-of-show-ip-interfaces-brief-on-a-cisco-ios-device">Diving in: parsing the output of <code>show ip interfaces brief</code> on a Cisco IOS device</h3>
 
-<p>Rather than reiterate what is in the documentation, lets dive in with an example. We&#39;ll start off with the playbook that captures the output of the <code>show ip interfaces brief</code> command.</p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="nn">---</span>
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">GENERATE A REPORT</span>
-  <span class="l l-Scalar l-Scalar-Plain">hosts</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">cisco</span>
-  <span class="l l-Scalar l-Scalar-Plain">gather_facts</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
-  <span class="l l-Scalar l-Scalar-Plain">connection</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">network_cli</span>
+<p>Rather than reiterate what is in the documentation, lets dive in with an example. We’ll start off with the playbook that captures the output of the <code>show ip interfaces brief</code> command.</p>
 
-  <span class="l l-Scalar l-Scalar-Plain">roles</span><span class="p p-Indicator">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ansible-network.network-engine</span>
+<pre><code class="language-yaml">---
+- name: GENERATE A REPORT
+  hosts: cisco
+  gather_facts: no
+  connection: network_cli
 
-  <span class="l l-Scalar l-Scalar-Plain">tasks</span><span class="p p-Indicator">:</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">CAPTURE SHOW IP INTERFACE</span>
-    <span class="l l-Scalar l-Scalar-Plain">ios_command</span><span class="p p-Indicator">:</span>
-      <span class="l l-Scalar l-Scalar-Plain">commands</span><span class="p p-Indicator">:</span>
-        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">show ip interface brief</span>
-    <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">output</span>
+  roles:
+    - ansible-network.network-engine
 
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">DISPLAY THE OUTPUT</span>
-    <span class="l l-Scalar l-Scalar-Plain">debug</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">var=output.stdout</span>
-</code></pre></div>
-<p>This should hopefully look familiar to folks who are used to using Ansible for working with network devices. Pay attention to the </p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span>  <span class="l l-Scalar l-Scalar-Plain">roles</span><span class="p p-Indicator">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ansible-network.network-engine</span>
-</code></pre></div>
+  tasks:
+  - name: CAPTURE SHOW IP INTERFACE
+    ios_command:
+      commands:
+        - show ip interface brief
+    register: output
+    
+  - name: DISPLAY THE OUTPUT
+    debug: var=output.stdout
+
+</code></pre>
+
+<p>This should hopefully look familiar to folks who are used to using Ansible for working with network devices. Pay attention to the</p>
+
+<pre><code class="language-yaml">  roles:
+    - ansible-network.network-engine
+
+</code></pre>
+
 <p>This is the role that provides the <code>command_parser</code> library that we will be working with. This role can be downloaded and installed as per instructions in the links above.</p>
 
 <p>On running the playbook (and limiting it to a single device):</p>
-<div class="highlight"><pre><code class="language-shell" data-lang="shell"><span></span>PLAY <span class="o">[</span>GENERATE A REPORT <span class="o">]</span> ***************************************************************************
 
-TASK <span class="o">[</span>CAPTURE SHOW IP INTERFACE<span class="o">]</span> ****************************************************************************
-ok: <span class="o">[</span>rtr1<span class="o">]</span>
+<pre><code class="language-shell">PLAY [GENERATE A REPORT ] ***************************************************************************
 
-TASK <span class="o">[</span>DISPLAY THE OUTPUT<span class="o">]</span> *****************************************************************************************************************************************************************************************
-ok: <span class="o">[</span>rtr1<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
-    <span class="s2">&quot;output.stdout&quot;</span>: <span class="o">[</span>
-        <span class="s2">&quot;Interface              IP-Address      OK? Method Status                Protocol\nGigabitEthernet1       172.16.244.50   YES DHCP   up                    up      \nLoopback0              192.168.1.101   YES manual up                    up      \nLoopback1              10.1.1.101      YES manual administratively down down    \nTunnel0                10.100.100.1    YES manual up                    up      \nTunnel1                10.200.200.1    YES manual up                    up      \nVirtualPortGroup0      192.168.35.101  YES TFTP   up                    up&quot;</span>
-    <span class="o">]</span>
-<span class="o">}</span>
+TASK [CAPTURE SHOW IP INTERFACE] ****************************************************************************
+ok: [rtr1]
+
+TASK [DISPLAY THE OUTPUT] *****************************************************************************************************************************************************************************************
+ok: [rtr1] =&gt; {
+    "output.stdout": [
+        "Interface              IP-Address      OK? Method Status                Protocol\nGigabitEthernet1       172.16.244.50   YES DHCP   up                    up      \nLoopback0              192.168.1.101   YES manual up                    up      \nLoopback1              10.1.1.101      YES manual administratively down down    \nTunnel0                10.100.100.1    YES manual up                    up      \nTunnel1                10.200.200.1    YES manual up                    up      \nVirtualPortGroup0      192.168.35.101  YES TFTP   up                    up"
+    ]
+}
 
 PLAY RECAP ********************************************************************************************************************************************************************************************************
-rtr1                       : <span class="nv">ok</span><span class="o">=</span><span class="m">2</span>    <span class="nv">changed</span><span class="o">=</span><span class="m">0</span>    <span class="nv">unreachable</span><span class="o">=</span><span class="m">0</span>    <span class="nv">failed</span><span class="o">=</span><span class="m">0</span>  
-</code></pre></div>
-<p>So far so good. We got the output of the show command. Now we can send this &quot;blob&quot; of text to a command parser that can create structured data from it.</p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="nn">---</span>
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">DYNAMIC REPORTING PART</span>
-  <span class="l l-Scalar l-Scalar-Plain">hosts</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">cisco</span>
-  <span class="l l-Scalar l-Scalar-Plain">gather_facts</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
-  <span class="l l-Scalar l-Scalar-Plain">connection</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">network_cli</span>
+rtr1                       : ok=2    changed=0    unreachable=0    failed=0  
 
-  <span class="l l-Scalar l-Scalar-Plain">roles</span><span class="p p-Indicator">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ansible-network.network-engine</span>
 
-  <span class="l l-Scalar l-Scalar-Plain">tasks</span><span class="p p-Indicator">:</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">CAPTURE SHOW IP INTERFACE</span>
-    <span class="l l-Scalar l-Scalar-Plain">ios_command</span><span class="p p-Indicator">:</span>
-      <span class="l l-Scalar l-Scalar-Plain">commands</span><span class="p p-Indicator">:</span>
-        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">show ip interface brief</span>
-    <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">output</span>
+</code></pre>
 
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">DISPLAY THE OUTPUT</span>
-    <span class="l l-Scalar l-Scalar-Plain">debug</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">var=output.stdout</span>
+<p>So far so good. We got the output of the show command. Now we can send this “blob” of text to a command parser that can create structured data from it.</p>
 
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">PARSE THE RAW OUTPUT</span>
-    <span class="l l-Scalar l-Scalar-Plain">command_parser</span><span class="p p-Indicator">:</span>
-      <span class="l l-Scalar l-Scalar-Plain">file</span><span class="p p-Indicator">:</span> <span class="s">&quot;parsers/ios/show_ip_interface_brief.yaml&quot;</span>
-      <span class="l l-Scalar l-Scalar-Plain">content</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">output.stdout[0]</span><span class="nv"> </span><span class="s">}}&quot;</span>
-</code></pre></div>
-<p>Now, we get into the meat of this blog. Using the <code>command_parser</code> module. </p>
+<pre><code class="language-yaml">
+---
+- name: DYNAMIC REPORTING PART
+  hosts: cisco
+  gather_facts: no
+  connection: network_cli
 
-<h3>Writing our first parser</h3>
+  roles:
+    - ansible-network.network-engine
+
+  tasks:
+  - name: CAPTURE SHOW IP INTERFACE
+    ios_command:
+      commands:
+        - show ip interface brief
+    register: output
+
+  - name: DISPLAY THE OUTPUT
+    debug: var=output.stdout
+
+  - name: PARSE THE RAW OUTPUT
+    command_parser:
+      file: "parsers/ios/show_ip_interface_brief.yaml"
+      content: "{{ output.stdout[0] }}"
+
+
+
+
+</code></pre>
+
+<p>Now, we get into the meat of this blog. Using the <code>command_parser</code> module.</p>
+
+<h3 id="writing-our-first-parser">Writing our first parser</h3>
 
 <p>This is my workflow for creating a new parser:</p>
 
 <ol>
-<li><p>Identify the regular expression/expressions needed to collect the data using regex101.com</p></li>
-<li><p>Use the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md">parser directives</a> to test out the regular expression</p></li>
-<li><p>Iterate and refine</p></li>
+  <li>
+    <p>Identify the regular expression/expressions needed to collect the data using regex101.com</p>
+  </li>
+  <li>
+    <p>Use the <a href="https://github.com/ansible-network/network-engine/blob/devel/docs/directives/parser_directives.md">parser directives</a> to test out the regular expression</p>
+  </li>
+  <li>
+    <p>Iterate and refine</p>
+  </li>
 </ol>
 
-<p>So let&#39;s begin with creating the regular expression. Let&#39;s say we want to capture the <em>Interface name, IP address, Admin state and Protocol State</em> . The following regular expression is what I came up with:</p>
-<div class="highlight"><pre><code class="language-text" data-lang="text"><span></span>^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively down).*(up|down)
-</code></pre></div>
-<p>On to step 2 testing this. The parser file defined by </p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span>      <span class="l l-Scalar l-Scalar-Plain">file</span><span class="p p-Indicator">:</span> <span class="s">&quot;parsers/ios/show_ip_interface_brief.yaml&quot;</span>
-</code></pre></div>
-<p>is a YAML file. </p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="nn">---</span>
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">PARSER META DATA</span>
-  <span class="l l-Scalar l-Scalar-Plain">parser_metadata</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">version</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1.0</span>
-    <span class="l l-Scalar l-Scalar-Plain">command</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">show ip interface brief</span>
-    <span class="l l-Scalar l-Scalar-Plain">network_os</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ios</span>
+<p>So let’s begin with creating the regular expression. Let’s say we want to capture the <em>Interface name, IP address, Admin state and Protocol State</em> . The following regular expression is what I came up with:</p>
 
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">MATCH PATTERN</span>
-  <span class="l l-Scalar l-Scalar-Plain">pattern_match</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">regex</span><span class="p p-Indicator">:</span> <span class="s">&quot;^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively</span><span class="nv"> </span><span class="s">down).*(up|down)&quot;</span>
-    <span class="l l-Scalar l-Scalar-Plain">match_all</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-  <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">section</span>
-  <span class="l l-Scalar l-Scalar-Plain">export</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-</code></pre></div>
+<pre><code>^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively down).*(up|down)
+</code></pre>
+
+<p>On to step 2 testing this. The parser file defined by</p>
+
+<pre><code class="language-yaml">      file: "parsers/ios/show_ip_interface_brief.yaml"
+
+</code></pre>
+
+<p>is a YAML file.</p>
+
+<pre><code class="language-yaml">---
+- name: PARSER META DATA
+  parser_metadata:
+    version: 1.0
+    command: show ip interface brief
+    network_os: ios
+
+- name: MATCH PATTERN
+  pattern_match:
+    regex: "^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively down).*(up|down)"
+    match_all: yes
+  register: section
+  export: yes
+
+</code></pre>
+
 <p>Here we are using the <code>pattern_match</code> directive. The regex is now applied to the blob of input passed in from the playbook task. The match groups are collected and stored into the variable called <code>section</code>. We use the <code>match_all</code> option in order to match all the capture groups.</p>
 
-<p>Note the use of the <code>export: yes</code>. Without this directive the variable and value contained will not be sent back to the playbook for further processing. </p>
+<p>Note the use of the <code>export: yes</code>. Without this directive the variable and value contained will not be sent back to the playbook for further processing.</p>
 
 <blockquote>
-<p>As part of our development of the parser we might have to use the <code>export: yes</code> at multiple stages.</p>
+  <p>As part of our development of the parser we might have to use the <code>export: yes</code> at multiple stages.</p>
 </blockquote>
 
 <p>In order to test this, re-run the playbook but in <code>verbose</code> mode:</p>
-<div class="highlight"><pre><code class="language-shell" data-lang="shell"><span></span>TASK <span class="o">[</span>PARSE THE RAW OUTPUT<span class="o">]</span> ***************************************************************************************************************************************************************************************
-ok: <span class="o">[</span>rtr1<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span><span class="s2">&quot;ansible_facts&quot;</span>: <span class="o">{</span><span class="s2">&quot;section&quot;</span>: <span class="o">[{</span><span class="s2">&quot;matches&quot;</span>: <span class="o">[</span><span class="s2">&quot;GigabitEthernet1&quot;</span>, <span class="s2">&quot;172.16.244.50&quot;</span>, <span class="s2">&quot;up&quot;</span>, <span class="s2">&quot;up&quot;</span><span class="o">]}</span>, <span class="o">{</span><span class="s2">&quot;matches&quot;</span>: <span class="o">[</span><span class="s2">&quot;Loopback0&quot;</span>, <span class="s2">&quot;192.168.1.101&quot;</span>, <span class="s2">&quot;up&quot;</span>, <span class="s2">&quot;up&quot;</span><span class="o">]}</span>, <span class="o">{</span><span class="s2">&quot;matches&quot;</span>: <span class="o">[</span><span class="s2">&quot;Loopback1&quot;</span>, <span class="s2">&quot;10.1.1.101&quot;</span>, <span class="s2">&quot;administratively down&quot;</span>, <span class="s2">&quot;down&quot;</span><span class="o">]}</span>, <span class="o">{</span><span class="s2">&quot;matches&quot;</span>: <span class="o">[</span><span class="s2">&quot;Tunnel0&quot;</span>, <span class="s2">&quot;10.100.100.1&quot;</span>, <span class="s2">&quot;up&quot;</span>, <span class="s2">&quot;up&quot;</span><span class="o">]}</span>, <span class="o">{</span><span class="s2">&quot;matches&quot;</span>: <span class="o">[</span><span class="s2">&quot;Tunnel1&quot;</span>, <span class="s2">&quot;10.200.200.1&quot;</span>, <span class="s2">&quot;up&quot;</span>, <span class="s2">&quot;up&quot;</span><span class="o">]}</span>, <span class="o">{</span><span class="s2">&quot;matches&quot;</span>: <span class="o">[</span><span class="s2">&quot;VirtualPortGroup0&quot;</span>, <span class="s2">&quot;192.168.35.101&quot;</span>, <span class="s2">&quot;up&quot;</span>, <span class="s2">&quot;up&quot;</span><span class="o">]}]}</span>, <span class="s2">&quot;changed&quot;</span>: false, <span class="s2">&quot;included&quot;</span>: <span class="o">[</span><span class="s2">&quot;parsers/ios/show_ip_interface_brief.yaml&quot;</span><span class="o">]}</span>
+
+<pre><code class="language-shell">
+TASK [PARSE THE RAW OUTPUT] ***************************************************************************************************************************************************************************************
+ok: [rtr1] =&gt; {"ansible_facts": {"section": [{"matches": ["GigabitEthernet1", "172.16.244.50", "up", "up"]}, {"matches": ["Loopback0", "192.168.1.101", "up", "up"]}, {"matches": ["Loopback1", "10.1.1.101", "administratively down", "down"]}, {"matches": ["Tunnel0", "10.100.100.1", "up", "up"]}, {"matches": ["Tunnel1", "10.200.200.1", "up", "up"]}, {"matches": ["VirtualPortGroup0", "192.168.35.101", "up", "up"]}]}, "changed": false, "included": ["parsers/ios/show_ip_interface_brief.yaml"]}
 
 PLAY RECAP ********************************************************************************************************************************************************************************************************
-rtr1                       : <span class="nv">ok</span><span class="o">=</span><span class="m">2</span>    <span class="nv">changed</span><span class="o">=</span><span class="m">0</span>    <span class="nv">unreachable</span><span class="o">=</span><span class="m">0</span>    <span class="nv">failed</span><span class="o">=</span><span class="m">0</span>   
-</code></pre></div>
-<p>Great! We can already see the data being returned as list of dictionaries. Now within the command parser you have the option of cleaning up and presenting this data as a structured <code>json</code> object. Let&#39;s do that as the next step using the <code>json_template</code> directive:</p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="nn">---</span>
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">PARSER META DATA</span>
-  <span class="l l-Scalar l-Scalar-Plain">parser_metadata</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">version</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1.0</span>
-    <span class="l l-Scalar l-Scalar-Plain">command</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">show ip interface brief</span>
-    <span class="l l-Scalar l-Scalar-Plain">network_os</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ios</span>
+rtr1                       : ok=2    changed=0    unreachable=0    failed=0   
 
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">MATCH PATTERN</span>
-  <span class="l l-Scalar l-Scalar-Plain">pattern_match</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">regex</span><span class="p p-Indicator">:</span> <span class="s">&quot;^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively</span><span class="nv"> </span><span class="s">down).*(up|down)&quot;</span>
-    <span class="l l-Scalar l-Scalar-Plain">match_all</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-  <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">section</span>
+</code></pre>
 
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">GENERATE JSON DATA STRUCTURE</span>
-  <span class="l l-Scalar l-Scalar-Plain">json_template</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">template</span><span class="p p-Indicator">:</span>
-      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.matches.0</span><span class="nv"> </span><span class="s">}}&quot;</span>
-        <span class="l l-Scalar l-Scalar-Plain">object</span><span class="p p-Indicator">:</span>
-        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">data</span>
-          <span class="l l-Scalar l-Scalar-Plain">object</span><span class="p p-Indicator">:</span>
-            <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">name</span>
-              <span class="l l-Scalar l-Scalar-Plain">value</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.matches.0</span><span class="nv"> </span><span class="s">}}&quot;</span>
-            <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ip</span>
-              <span class="l l-Scalar l-Scalar-Plain">value</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.matches.1</span><span class="nv"> </span><span class="s">}}&quot;</span>
-            <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">admin_state</span>
-              <span class="l l-Scalar l-Scalar-Plain">value</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.matches.2</span><span class="nv"> </span><span class="s">}}&quot;</span>
-            <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">key</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">protocol_state</span>
-              <span class="l l-Scalar l-Scalar-Plain">value</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">item.matches.3</span><span class="nv"> </span><span class="s">}}&quot;</span>
-  <span class="l l-Scalar l-Scalar-Plain">loop</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">section</span><span class="nv"> </span><span class="s">}}&quot;</span>
-  <span class="l l-Scalar l-Scalar-Plain">export</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
-  <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ip_interface_facts</span>
-</code></pre></div>
+<p>Great! We can already see the data being returned as list of dictionaries. Now within the command parser you have the option of cleaning up and presenting this data as a structured <code>json</code> object. Let’s do that as the next step using the <code>json_template</code> directive:</p>
+
+<pre><code class="language-yaml">
+---
+- name: PARSER META DATA
+  parser_metadata:
+    version: 1.0
+    command: show ip interface brief
+    network_os: ios
+
+- name: MATCH PATTERN
+  pattern_match:
+    regex: "^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively down).*(up|down)"
+    match_all: yes
+  register: section
+
+- name: GENERATE JSON DATA STRUCTURE
+  json_template:
+    template:
+      - key: "{{ item.matches.0 }}"
+        object:
+        - key: data
+          object:
+            - key: name
+              value: "{{ item.matches.0 }}"
+            - key: ip
+              value: "{{ item.matches.1 }}"
+            - key: admin_state
+              value: "{{ item.matches.2 }}"
+            - key: protocol_state
+              value: "{{ item.matches.3 }}"
+  loop: "{{ section }}"
+  export: yes
+  register: ip_interface_facts
+
+
+</code></pre>
+
 <p>The previous match was registered into a variable called <code>section</code>. This is a list as seen from the verbose output above. This list can be looped over to work on individual elements using the <code>loop</code> directive. The <code>json_template</code> directive is used to define a nested dictionary with the key of each element being the name of the interface in this example.</p>
 
 <blockquote>
-<p>Note: The <strong>export: yes</strong> has been moved from the <strong>section</strong> variable to the <strong>ip<em>interface</em>facts</strong> variable. </p>
+  <p>Note: The <strong>export: yes</strong> has been moved from the <strong>section</strong> variable to the <strong>ip_interface_facts</strong> variable.</p>
 </blockquote>
 
-<p>Once exported the variable becomes available within the playbook and can be used just like any other variable in Ansible. Let&#39;s go ahead and display this using <code>debug</code>:</p>
-<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span></span><span class="nn">---</span>
-<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">DYNAMIC REPORTING PART</span>
-  <span class="l l-Scalar l-Scalar-Plain">hosts</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">cisco</span>
-  <span class="l l-Scalar l-Scalar-Plain">gather_facts</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
-  <span class="l l-Scalar l-Scalar-Plain">connection</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">network_cli</span>
+<p>Once exported the variable becomes available within the playbook and can be used just like any other variable in Ansible. Let’s go ahead and display this using <code>debug</code>:</p>
 
-  <span class="l l-Scalar l-Scalar-Plain">roles</span><span class="p p-Indicator">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ansible-network.network-engine</span>
+<pre><code class="language-yaml">
+---
+- name: DYNAMIC REPORTING PART
+  hosts: cisco
+  gather_facts: no
+  connection: network_cli
 
-  <span class="l l-Scalar l-Scalar-Plain">tasks</span><span class="p p-Indicator">:</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">CAPTURE SHOW IP ROUTE</span>
-    <span class="l l-Scalar l-Scalar-Plain">ios_command</span><span class="p p-Indicator">:</span>
-      <span class="l l-Scalar l-Scalar-Plain">commands</span><span class="p p-Indicator">:</span>
-        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">show ip interface brief</span>
-    <span class="l l-Scalar l-Scalar-Plain">register</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">output</span>
+  roles:
+    - ansible-network.network-engine
 
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">PARSE THE RAW OUTPUT</span>
-    <span class="l l-Scalar l-Scalar-Plain">command_parser</span><span class="p p-Indicator">:</span>
-      <span class="l l-Scalar l-Scalar-Plain">file</span><span class="p p-Indicator">:</span> <span class="s">&quot;parsers/ios/show_ip_interface_brief.yaml&quot;</span>
-      <span class="l l-Scalar l-Scalar-Plain">content</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">output.stdout[0]</span><span class="nv"> </span><span class="s">}}&quot;</span>
+  tasks:
+  - name: CAPTURE SHOW IP ROUTE
+    ios_command:
+      commands:
+        - show ip interface brief
+    register: output
 
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">DISPLAY THE DATA</span>
-    <span class="l l-Scalar l-Scalar-Plain">debug</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">var=ip_interface_facts</span>
-</code></pre></div>
+  - name: PARSE THE RAW OUTPUT
+    command_parser:
+      file: "parsers/ios/show_ip_interface_brief.yaml"
+      content: "{{ output.stdout[0] }}"
+
+  - name: DISPLAY THE DATA
+    debug: var=ip_interface_facts
+    
+
+
+</code></pre>
+
 <p>Now when we run the playbook:</p>
-<div class="highlight"><pre><code class="language-shell" data-lang="shell"><span></span>TASK <span class="o">[</span>DISPLAY THE DATA<span class="o">]</span> *******************************************************************************************************************************************************************************************
-ok: <span class="o">[</span>rtr1<span class="o">]</span> <span class="o">=</span>&gt; <span class="o">{</span>
-    <span class="s2">&quot;ip_interface_facts&quot;</span>: <span class="o">[</span>
-        <span class="o">{</span>
-            <span class="s2">&quot;GigabitEthernet1&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;data&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;admin_state&quot;</span>: <span class="s2">&quot;up&quot;</span>, 
-                    <span class="s2">&quot;ip&quot;</span>: <span class="s2">&quot;172.16.244.50&quot;</span>, 
-                    <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;GigabitEthernet1&quot;</span>, 
-                    <span class="s2">&quot;protocol_state&quot;</span>: <span class="s2">&quot;up&quot;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>, 
-        <span class="o">{</span>
-            <span class="s2">&quot;Loopback0&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;data&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;admin_state&quot;</span>: <span class="s2">&quot;up&quot;</span>, 
-                    <span class="s2">&quot;ip&quot;</span>: <span class="s2">&quot;192.168.1.101&quot;</span>, 
-                    <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;Loopback0&quot;</span>, 
-                    <span class="s2">&quot;protocol_state&quot;</span>: <span class="s2">&quot;up&quot;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>, 
-        <span class="o">{</span>
-            <span class="s2">&quot;Loopback1&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;data&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;admin_state&quot;</span>: <span class="s2">&quot;administratively down&quot;</span>, 
-                    <span class="s2">&quot;ip&quot;</span>: <span class="s2">&quot;10.1.1.101&quot;</span>, 
-                    <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;Loopback1&quot;</span>, 
-                    <span class="s2">&quot;protocol_state&quot;</span>: <span class="s2">&quot;down&quot;</span>
-                <span class="o">}</span>
-            <span class="o">}</span>
-        <span class="o">}</span>, 
-        <span class="o">{</span>
-            <span class="s2">&quot;Tunnel0&quot;</span>: <span class="o">{</span>
-                <span class="s2">&quot;data&quot;</span>: <span class="o">{</span>
-                    <span class="s2">&quot;admin_state&quot;</span>: <span class="s2">&quot;up&quot;</span>, 
-                    <span class="s2">&quot;ip&quot;</span>: <span class="s2">&quot;10.100.100.1&quot;</span>, 
-                    <span class="s2">&quot;name&quot;</span>: <span class="s2">&quot;Tunnel0&quot;</span>, 
+
+<pre><code class="language-shell">TASK [DISPLAY THE DATA] *******************************************************************************************************************************************************************************************
+ok: [rtr1] =&gt; {
+    "ip_interface_facts": [
+        {
+            "GigabitEthernet1": {
+                "data": {
+                    "admin_state": "up", 
+                    "ip": "172.16.244.50", 
+                    "name": "GigabitEthernet1", 
+                    "protocol_state": "up"
+                }
+            }
+        }, 
+        {
+            "Loopback0": {
+                "data": {
+                    "admin_state": "up", 
+                    "ip": "192.168.1.101", 
+                    "name": "Loopback0", 
+                    "protocol_state": "up"
+                }
+            }
+        }, 
+        {
+            "Loopback1": {
+                "data": {
+                    "admin_state": "administratively down", 
+                    "ip": "10.1.1.101", 
+                    "name": "Loopback1", 
+                    "protocol_state": "down"
+                }
+            }
+        }, 
+        {
+            "Tunnel0": {
+                "data": {
+                    "admin_state": "up", 
+                    "ip": "10.100.100.1", 
+                    "name": "Tunnel0", 
 .
 .
 .
 .
 .
-&lt;output omitted <span class="k">for</span> brevity&gt;
-</code></pre></div>
-<p>Now, wasn&#39;t that easy!! At least I think it was a lot easier to work with personally than TextFSM. </p>
+&lt;output omitted for brevity&gt;
+</code></pre>
+
+<p>Now, wasn’t that easy!! At least I think it was a lot easier to work with personally than TextFSM.</p>
 
 <p>In part 2 of the blog series we will build a command parser for the <code>show interfaces</code> command on IOS devices. This will be a little more complex than the example in part 1 and will hopefully help demonstrate how really powerful the <code>command_parser</code> module is.</p>
 
-<p><em>Twitter:</em> <a href="https://twitter.com/intent/tweet?url=http://localhost:4000/2018/06/26/observations/&text=Part1 of a 2 part blog on using the Ansible network-engine's command parser&via=termlen0" 
-   target="_blank"> Share it with your followers</a> 
+<p><em>Twitter:</em> <a href="https://twitter.com/intent/tweet?url=http://localhost:4000/2018/06/26/observations/&amp;text=Part1 of a 2 part blog on using the Ansible network-engine's command parser&amp;via=termlen0" target="_blank"> Share it with your followers</a> 
 or 
 <a href="https://twitter.com/termlen0">
   Follow me on Twitter</a>!</p>
+
 
 </div>
 <a href="https://twitter.com/share" class="twitter-share-button"
@@ -382,6 +434,15 @@ data-via="termlen0">Tweet</a>
 <div class="related">
   <h2>Related Posts</h2>
   <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2019/11/16/observations/">
+            Ansible Custom Inventory Plugin - a quick start
+            <small>16 Nov 2019</small>
+          </a>
+        </h3>
+      </li>
     
       <li>
         <h3>
@@ -397,15 +458,6 @@ data-via="termlen0">Tweet</a>
           <a href="/2018/07/30/observations/">
             Using Ansible network-engine to simplify network automation tasks
             <small>30 Jul 2018</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
-          <a href="/2018/07/15/observations/">
-            Part2 of a 2 part blog on using the Ansible network-engine's command parser
-            <small>15 Jul 2018</small>
           </a>
         </h3>
       </li>

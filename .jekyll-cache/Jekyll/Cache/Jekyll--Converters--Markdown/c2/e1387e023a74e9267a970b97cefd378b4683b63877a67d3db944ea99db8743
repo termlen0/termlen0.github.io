@@ -1,0 +1,5 @@
+I"<p>Last week at Networking field day (<a href="http://techfieldday.com/event/nfd18/">NFD18</a>), Peter Sprygada (<a href="https://twitter.com/privateip">@privateip</a>) gave a fantastic presentation about the problems in network automation and new initiatives from Ansible to help network and automation engineers.</p>
+
+<p>In short - network automation teams are recreating similar Ansible playbooks since most of us have similar problems to solve. For instance, adding an application to the datacenter will require creation of VLANS, extending them over port channels, creating STP priorities etc. The Ansible network-engine strives to provide pre-canned, opinionated (meaning best-practices) roles that will make automation easier to kick start and reuse across most teams.</p>
+
+:ET

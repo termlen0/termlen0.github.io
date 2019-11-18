@@ -95,6 +95,8 @@
           
         
       
+        
+      
 
             <a class="sidebar-nav-item" href="https://github.com/termlen0">GitHub project</a>
 
@@ -116,6 +118,30 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/2016/12/28/observations/">
+        The need for a stateful variable tracker and an implementation example
+      </a>
+    </h1>
+
+    <span class="post-date">28 Dec 2016</span>
+
+    <p>When it comes to automation role models, network engineers have often looked up,
+to our compute brethren. For decades, compute admins have had tools that allowed
+them to execute scripts on systems at particular times: typically backups,
+rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
+Ansible, have empowered ‘Developer Administrators’, to stand up the entire app
+stack, automatically.</p>
+
+<p>In my network automation journey, I realized early on that, a big gap/obstacle
+for network automation is the need for a backend, to track positive
+integers; a source of truth, that knows what numeric value was last</p>
+
+
+    <a href="/2016/12/28/observations/"> Read more </a>
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/2016/12/16/observations/">
         Running ansible at scale
       </a>
@@ -123,21 +149,20 @@
 
     <span class="post-date">16 Dec 2016</span>
 
-    <p>Last week I deployed my first &quot;at scale&quot; playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
-Like most things though, the devil is in the details. Right off the bat, I ran into &quot;non-ansible&quot; related issues (tacacs/ssh).
+    <p>Last week I deployed my first “at scale” playbook. The overall objective was simple: Add new dhcp helper address to about 400 switches.
+Like most things though, the devil is in the details. Right off the bat, I ran into “non-ansible” related issues (tacacs/ssh).
 That brought the number of devices to about 270. Not a big number right?
 At the most basic level, yes, if I was simply pushing configs using the ios_config
-module.</p>
-
-<h2>Breakdown of the playbook</h2>
-
+module.
+##Breakdown of the playbook</p>
 <ol>
-<li>Execute a show run on the device and compile a local backup for each device</li>
-<li>Run a pre-flight report, specific to the interfaces we are going to impact (multiple ssh sessions per host)</li>
-<li>Build the configs locally</li>
-<li>Deploy the configs</li>
-<li>Validate the configs/Unit testing</li>
+  <li>Execute a show run on the device and compile a local backup for each device</li>
+  <li>Run a pre-flight report, specific to the interfaces we are going to impact (multiple ssh sessions per host)</li>
+  <li>Build the configs locally</li>
+  <li>Deploy the configs</li>
+  <li>Validate the configs/Unit testing</li>
 </ol>
+
 
     <a href="/2016/12/16/observations/"> Read more </a>
   </div>

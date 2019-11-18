@@ -1,0 +1,386 @@
+I"�@<p>In <a href="https://termlen0.github.io/2018/06/26/observations/">Part 1</a> of this 2 part series, I illustrated how to invoke the <code>command_parser</code> module using the <code>network-engine</code> role from Ansible. I then used it to illustrate how to build a simple parser, leveraging regex to convert unstructured device command output to structured data.</p>
+
+<p>In this post, I’ll build on it, highlighting the command parser options that makes wrangling <em>any</em> complex device output into structured output. In particular this post will deep-dive into the following directives:</p>
+
+<ul>
+  <li><code>pattern_group</code></li>
+  <li><code>extend</code></li>
+</ul>
+
+<p><strong>The playbook and complete parser is available in <a href="https://github.com/termlen0/parser_demo">this git repo.</a></strong></p>
+
+<!--more-->
+
+<h3 id="understanding-the-output-pattern">Understanding the output pattern</h3>
+
+<p>We used <code>pattern_match</code> in the last example to parse the output of the <code>show ip interface brief</code> command.</p>
+
+<pre><code class="language-yaml">- name: MATCH PATTERN
+  pattern_match:
+    regex: "^(\\S+)\\s+(\\d+\\.\\d+\\.\\d+\\.\\d+).*(up|administratively down).*(up|down)"
+    match_all: yes
+  register: section
+</code></pre>
+
+<p>Note that we used the <code>match_all</code> parameter to match each regex group. This worked well for matching against the following command output, because we were working with a single line at a time.</p>
+
+<pre><code class="language-bash">rtr1#sh ip int bri
+Interface              IP-Address      OK? Method Status                Protocol
+GigabitEthernet1       172.16.230.103  YES DHCP   up                    up      
+Loopback0              192.168.1.101   YES manual up                    up      
+rtr1#
+</code></pre>
+
+<p>What if we wanted to loop over entire sections in the output? Let’s illustrate using an example:</p>
+
+<pre><code class="language-bash">rtr1#sh interfaces 
+GigabitEthernet1 is up, line protocol is up 
+  Hardware is CSR vNIC, address is 0e56.892c.0434 (bia 0e56.892c.0434)
+  Internet address is 172.16.230.103/16
+  MTU 1500 bytes, BW 1000000 Kbit/sec, DLY 10 usec, 
+     reliability 255/255, txload 1/255, rxload 1/255
+  Encapsulation ARPA, loopback not set
+  Keepalive set (10 sec)
+  Full Duplex, 1000Mbps, link type is auto, media type is Virtual
+  output flow-control is unsupported, input flow-control is unsupported
+  ARP type: ARPA, ARP Timeout 04:00:00
+  Last input 00:00:00, output 00:00:00, output hang never
+  Last clearing of "show interface" counters never
+  Input queue: 0/375/0/0 (size/max/drops/flushes); Total output drops: 0
+  Queueing strategy: fifo
+  Output queue: 0/40 (size/max)
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 1000 bits/sec, 1 packets/sec
+     204069 packets input, 21320843 bytes, 0 no buffer
+     Received 0 broadcasts (0 IP multicasts)
+     0 runts, 0 giants, 0 throttles 
+     0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored
+     0 watchdog, 0 multicast, 0 pause input
+     205563 packets output, 26944541 bytes, 0 underruns
+     0 output errors, 0 collisions, 1 interface resets
+     0 unknown protocol drops
+     0 babbles, 0 late collision, 0 deferred
+     0 lost carrier, 0 no carrier, 0 pause output
+     0 output buffer failures, 0 output buffers swapped out
+Loopback0 is up, line protocol is up 
+  Hardware is Loopback
+  Internet address is 192.168.1.101/24
+  MTU 1514 bytes, BW 8000000 Kbit/sec, DLY 5000 usec, 
+     reliability 255/255, txload 1/255, rxload 1/255
+  Encapsulation LOOPBACK, loopback not set
+  Keepalive set (10 sec)
+  Last input never, output never, output hang never
+  Last clearing of "show interface" counters never
+.
+.
+.
+.
+.
+&lt;output omitted for brevity&gt;
+</code></pre>
+
+<p>The <code>show interfaces</code> command displays a wealth of information per interface. Let’s say we want to capture the following information:</p>
+
+<ul>
+  <li>Interface name</li>
+  <li>MTU</li>
+  <li>txload</li>
+  <li>rxload</li>
+</ul>
+
+<h3 id="building-a-list">Building a list</h3>
+<p>The first step is to build a list using <code>pattern_match</code> where each element of the list corresponds to all the information about an interface.</p>
+
+<pre><code class="language-yaml">---
+- name: parser meta data
+  parser_metadata:
+    version: 1.0
+    command: show interface
+    network_os: ios
+
+- name: match sections
+  pattern_match:
+    regex: "^(\\S+) is.*(?:up|down),"
+    match_all: yes
+    match_greedy: yes
+  register: section
+  export: yes
+
+</code></pre>
+
+<blockquote>
+  <p>The <code>match_greedy</code> will match everything after the regex match. The <code>match_all</code> will match each interface as a distinct match and add it to the list variable called section.</p>
+</blockquote>
+
+<p>Debugging this output in the playbook reveals the contents of the <code>section</code> variable:</p>
+
+<pre><code class="language-bash">
+TASK [DISPLAY THE PARSED OUTPUT] **************************************************************************************************ok: [rtr1] =&gt; {
+    "section": [
+        "GigabitEthernet1 is up, line protocol is up \n  Hardware is CSR vNIC, address is 0e56.892c.0434 (bia 0e56.892c.0434)\n  Internet address is 172.16.230.103/16\n  MTU 1500 bytes, BW 1000000 Kbit/sec, DLY 10 usec, \n     reliability 255/255, txload 1/255, rxload 1/255\n  Encapsulation ARPA, loopback not set\n  Keepalive set (10 sec)\n  Full Duplex, 1000Mbps, link type is auto, media type is Virtual\n  output flow-control is unsupported, input flow-control is unsupported\n  ARP type: ARPA, ARP Timeout 04:00:00\n  Last input 00:00:00, output 00:00:00, output hang never\n  Last clearing of \"show interface\" counters never\n  Input queue: 0/375/0/0 (size/max/drops/flushes); Total output drops: 0\n  Queueing strategy: fifo\n  Output queue: 0/40 (size/max)\n  5 minute input 
+rate 1000 bits/sec, 2 packets/sec\n  5 minute output rate 1000 bits/sec, 2 packets/sec\n     206723 packets input, 21601205 bytes, 0 no buffer\n     Received 0 broadcasts (0 IP multicasts)\n     0 runts, 0 giants, 0 throttles \n     0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored\n     0 watchdog, 0 multicast, 0 pause input\n     208526 packets output, 27353095 bytes, 0 underruns\n     0 output errors, 0 collisions, 1 interface resets\n     0 unknown protocol drops\n     0 babbles, 0 late collision, 0 deferred\n     0 lost carrier, 0 no carrier, 0 pause output\n     0 output buffer failures, 0 output buffers swapped out\n", 
+        "Loopback0 is up, line protocol is up \n  Hardware is Loopback\n  Internet address is 192.168.1.101/24\n  MTU 1514 bytes, BW 8000000 Kbit/sec, DLY 5000 usec, \n     reliability 255/255, txload 1/255, rxload 1/255\n  Encapsulation LOOPBACK, loopback not set\n  Keepalive set (10 sec)\n  Last input never, output never, output hang never\n  Last clearing of \"show interface\" counters never\n  Input queue: 0/75/0/0 (size/max/drops/flushes); Total output drops: 0\n  Que
+.
+.
+.
+.
+.
+&lt;output omitted for brevity&gt;
+</code></pre>
+
+<blockquote>
+  <p>Note that all info about Gig1 is the first element of this list. Loopback0 is the second element and so on.</p>
+</blockquote>
+
+<h3 id="building-a-pattern-group">Building a pattern group</h3>
+
+<p>Now that we have list, we can use the same design patterns we are familiar with in Ansible, using loops. Using the <code>pattern_group</code> directive we can now build a new nested variable that uses the <code>pattern_match</code> directive.</p>
+
+<pre><code class="language-yaml">- name: match interface values
+  pattern_group:
+    - name: match name
+      pattern_match:
+        regex: "^(\\S+)"
+        content: "{{ item }}"
+      register: name
+
+    - name: match mtu
+      pattern_match:
+        regex: "MTU (\\d+)"
+        content: "{{ item }}"
+      register: mtu
+
+    - name: match txload
+      pattern_match:
+        regex: "reliability.*txload\\s(\\S+),.*"
+        content: "{{ item }}"
+      register: txload
+
+    - name: match rxload
+      pattern_match:
+        regex: "reliability.*rxload\\s(\\S+)"
+        content: "{{ item }}"
+      register: rxload
+  loop: "{{ section }}"
+  register: interfaces
+  export: yes
+
+</code></pre>
+
+<p>Effectively, we are looping through the data of each interface and creating a pattern group (registering it as a variable called <code>interfaces</code>). Note the similarity of pattern using the <code>item</code> variable while working with loops in Ansible. Each of the <code>pattern_match</code> directives nested within the <code>pattern_group</code> is using a regex to match the data we wanted at the start.</p>
+
+<p>On re-running the playbook with the updated parser, our debug output looks as follows:</p>
+
+<pre><code class="language-bash">TASK [DISPLAY THE PARSED OUTPUT] **************************************************************************************************
+ok: [rtr1] =&gt; {
+    "interfaces": [
+        {
+            "mtu": {
+                "matches": [
+                    "1500"
+                ]
+            }, 
+            "name": {
+                "matches": [
+                    "GigabitEthernet1"
+                ]
+            }, 
+            "rxload": {
+                "matches": [
+                    "1/255"
+                ]
+            }, 
+            "txload": {
+                "matches": [
+                    "1/255"
+                ]
+            }
+        }, 
+        {
+            "mtu": {
+                "matches": [
+                    "1514"
+                ]
+            }, 
+            "name": {
+                "matches": [
+                    "Loopback0"
+                ]
+            }, 
+            "rxload": {
+                "matches": [
+                    "1/255"
+                ]
+            }, 
+            "txload": {
+                "matches": [
+                    "1/255"
+                ]
+            }
+        }, 
+.
+.
+.
+.
+.
+&lt;output omitted for brevity&gt;
+</code></pre>
+
+<h3 id="creating-a-json-output">Creating a JSON output</h3>
+
+<p>Now that we have our regular expressions sorted out and we can see that the data we are interested in is being returned as a structured object, all that remains is to build a JSON object similar to how we did it in <a href="https://termlen0.github.io/2018/06/26/observations/">Part1</a>.</p>
+
+<pre><code class="language-yaml">- name: generate json data structure
+  json_template:
+    template:
+      - key: "{{ item.name.matches.0 }}"
+        object:
+        - key: config
+          object:
+            - key: name
+              value: "{{ item.name.matches.0 }}"
+            - key: mtu
+              value: "{{ item.mtu.matches.0 }}"
+            - key: rxload
+              value: "{{ item.rxload.matches.0 }}"
+            - key: txload
+              value: "{{ item.txload.matches.0 }}"
+  loop: "{{ interfaces }}"
+  export: yes
+  register: interface_facts
+</code></pre>
+
+<p>Re-running the playbook and debugging <code>interface_facts</code> shows us the final, desired output.</p>
+
+<pre><code class="language-bash">TASK [DISPLAY THE PARSED OUTPUT] **************************************************************************************************
+ok: [rtr1] =&gt; {
+    "interface_facts": [
+        {
+            "GigabitEthernet1": {
+                "config": {
+                    "mtu": 1500, 
+                    "name": "GigabitEthernet1", 
+                    "rxload": "1/255", 
+                    "txload": "1/255"
+                }
+            }
+        }, 
+        {
+            "Loopback0": {
+                "config": {
+                    "mtu": 1514, 
+                    "name": "Loopback0", 
+                    "rxload": "1/255", 
+                    "txload": "1/255"
+                }
+            }
+        }, 
+
+</code></pre>
+
+<p>This is why I think <code>command_parser</code> is such a powerful tool to parse complex show command output, using the same Ansible design patterns we are familiar with, without needing to learn yet another domain specific syntax or language. As network engineers we now have a tool that abstracts away the underlying complexity of programming.</p>
+
+<p>Alright now on to some more <code>command_parser</code> goodness!…..</p>
+
+<h3 id="building-customized-facts-without-needing-to-write-a-module">Building customized “facts” without needing to write a module!</h3>
+
+<p><strong>NOTE: THE FOLLOWING WORKS <em>ONLY</em> WITH THE DEVEL BRANCH OF THE NETWORK-ENGINE ROLE AT THE TIME OF THIS POST</strong></p>
+
+<p>If you have used the network modules in Ansible you are probably familiar with the <code>*_facts</code> modules. Modules like <code>ios_facts</code>, <code>eos_facts</code>, <code>junos_facts</code> etc. While you can have limited control over the output from these modules (by using the <code>gather_subset</code> directive), you are by and large restricted to what the module creators consider <strong>“facts”</strong>.</p>
+
+<p>In the following section, let’s look at a powerful directive from the <code>command_parser</code> module called <code>extend</code> to learn how we can build our own customized facts parser - without needing to write a single line of code!!</p>
+
+<p>We’ll use the parsers we created in Part1 and the above one to create a single variable called <code>ios_interface_facts</code>.</p>
+
+<p>The basic changes needed to the parsers are as follows:</p>
+
+<h6 id="show_ip_interfacesyaml">show_ip_interfaces.yaml</h6>
+
+<pre><code class="language-yaml">  extend: ios_interface_facts
+
+</code></pre>
+
+<p>and</p>
+
+<h6 id="show_interfacesyaml">show_interfaces.yaml</h6>
+
+<pre><code class="language-yaml">  export_as: dict
+  extend: ios_interface_facts
+
+</code></pre>
+
+<blockquote>
+  <p>These directives are added to the <code>json_template</code> section of the parser. Please see the github  <a href="https://github.com/termlen0/parser_demo">repo</a> for details. You will need to uncomment them to test.</p>
+</blockquote>
+
+<p>With this in place, re-running the playbook and debugging the <code>ios_interfaces_facts</code> variable shows how the output of both the above parsers are made available in a single variable.</p>
+
+<blockquote>
+  <p>Note: Run the playbook invoking the <strong>demo_extend</strong> tag if you are testing with the sample <a href="https://github.com/termlen0/parser_demo">repo</a></p>
+</blockquote>
+
+<pre><code class="language-bash">TASK [DISPLAY THE GENERATED FACT] ****************************************************************************************************************
+ok: [rtr1] =&gt; {
+    "ios_interface_facts": {
+        "interface_facts": {
+            "GigabitEthernet1": {
+                "config": {
+                    "mtu": 1500, 
+                    "name": "GigabitEthernet1", 
+                    "rxload": "1/255", 
+                    "txload": "1/255"
+                }
+            }, 
+            "Loopback0": {
+                "config": {
+                    "mtu": 1514, 
+                    "name": "Loopback0", 
+                    "rxload": "1/255", 
+                    "txload": "1/255"
+                }
+            }, 
+            "Loopback1": {
+.
+.
+.
+.
+.
+&lt;output omitted for brevity&gt;
+        "ip_interface_facts": [
+            {
+                "GigabitEthernet1": {
+                    "data": {
+                        "admin_state": "up", 
+                        "ip": "172.16.230.103", 
+                        "name": "GigabitEthernet1", 
+                        "protocol_state": "up"
+                    }
+                }
+            }, 
+            {
+                "Loopback0": {
+                    "data": {
+                        "admin_state": "up", 
+                        "ip": "192.168.1.101", 
+                        "name": "Loopback0", 
+                        "protocol_state": "up"
+                    }
+                }
+            }, 
+            {
+                "Loopback1": {
+                    "data": {
+                        "admin_state": "up", 
+                        "ip": "10.1.1.101", 
+.
+.
+.
+.
+.
+&lt;output omitted for brevity&gt;
+</code></pre>
+
+<p>As you can see the <code>ios_interfaces_facts</code> is a nested object that contains 2 keys <code>interface_facts</code> - the parsed output of the <em>show interfaces</em> command - and the <code>ip_interface_facts</code> - the parsed output of the <em>show ip interface brief</em> command.</p>
+
+<p>Hopefully this quick illustration of some of the powerful directives within command parser are helpful to you. I’d love to hear what your thoughts are on this approach and perceived ease/difficulty with this method of parsing device command output.</p>
+:ET

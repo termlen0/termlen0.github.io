@@ -119,7 +119,7 @@
 to our compute brethren. For decades, compute admins have had tools that allowed
 them to execute scripts on systems at particular times: typically backups,
 rsync etc. More recently, in the VM universe,  DevOps tools like Chef/Puppet/
-Ansible, have empowered &#39;Developer Administrators&#39;, to stand up the entire app
+Ansible, have empowered ‘Developer Administrators’, to stand up the entire app
 stack, automatically.</p>
 
 <p>In my network automation journey, I realized early on that, a big gap/obstacle
@@ -135,53 +135,50 @@ standpoint). We typically make incremental changes to <em>variables</em> in a pr
 network configuration. For instance, once a port-channel
 is created, say Po101, we typically have some internal standard as to how the
 next port-channel will be numbered (could be Po102, Po201 etc). For a given
-&#39;network service&#39;, we have to track many similar variables: Vlan numbers, Vrf numbers,
-HSRP group numbers, subinterface numbers, AS numbers.... The list goes on.
+‘network service’, we have to track many similar variables: Vlan numbers, Vrf numbers,
+HSRP group numbers, subinterface numbers, AS numbers…. The list goes on.
 Now, in quick contrast, the compute folks have almost never had this problem.
 Most automation in that space is:</p>
 
 <ol>
-<li>Stand up the VM</li>
-<li>Install necessary middleware</li>
-<li>Clone the app repo</li>
-<li>Fire up the app</li>
-<li>Ensure compliance</li>
+  <li>Stand up the VM</li>
+  <li>Install necessary middleware</li>
+  <li>Clone the app repo</li>
+  <li>Fire up the app</li>
+  <li>Ensure compliance</li>
 </ol>
 
-<h2>What about IP addresses:</h2>
-
+<h2 id="what-about-ip-addresses">What about IP addresses:</h2>
 <p>Obviously, I am oversimplifying a bit, but the point remains that, there really
-isn&#39;t much state tracking, when it comes to application/OS admin automation.
+isn’t much state tracking, when it comes to application/OS admin automation.
 Back in the day (actually, less than 10 yrs ago), I remember when
 compute/application admins were very fond of static IP addresses.
-That used to be &#39;stateful&#39; variable they needed tracked. Not any more.
+That used to be ‘stateful’ variable they needed tracked. Not any more.
 Unfortunately, on the network side, we are still very dependent (depending on the use
 case) on static IP addressing for our devices. Needless to say a solid IPAM
 is an extremely important stateful variable tracker for network
 automation. The reason for this blog post is, however, to address the
-&quot;other&quot; variables (vlan numbers, vif numbers et al), we need for
-network automation, that doesn&#39;t really come built into standard,
-&#39;network focused&#39; software, like IPAMs/CMDB</p>
+“other” variables (vlan numbers, vif numbers et al), we need for
+network automation, that doesn’t really come built into standard,
+‘network focused’ software, like IPAMs/CMDB</p>
 
-<h2>An implementation example using NSoT:</h2>
-
+<h2 id="an-implementation-example-using-nsot">An implementation example using NSoT:</h2>
 <p><a href="https://github.com/dropbox/nsot">NSoT</a> is an opensource
 IPAM(primarily) from the folks at dropbox. Last year at the NetDevOps
-workshop at Interop,  <a href="https://twitter.com/jathanism">Jathan</a> demo&#39;ed
+workshop at Interop,  <a href="https://twitter.com/jathanism">Jathan</a> demo’ed
 the product. It had 2 things that caught my attention:</p>
 
 <ol>
-<li>It was written with an API first approach</li>
-<li>It was written in python (a language that I am least uncomfortable
+  <li>It was written with an API first approach</li>
+  <li>It was written in python (a language that I am least uncomfortable
 in :) )</li>
 </ol>
 
-<p>I forked the repo and implemented the &quot;Iterables&quot; API, with a lot of
+<p>I forked the repo and implemented the “Iterables” API, with a lot of
 guidance and support from Jathan. We have since, internally, used my
 implementation of NSoT, to prove out quite a few automation scenarios.</p>
 
-<h2>Iterables - A visualization:</h2>
-
+<h2 id="iterables---a-visualization">Iterables - A visualization:</h2>
 <p>My implementation of the stateful variables, involves 2 tables. One
 table tracks the variable that needs to be iterated (vlans numbers,
 vif numbers etc, along with the increment value). The other table
@@ -189,7 +186,7 @@ tracks all allocated values for a given variable.
 My good friend <a href="https://www.linkedin.com/in/bobbyoutlaw">Bobby Outlaw</a>
 helped visualize the idea as follows:</p>
 
-<p><a href="/assets/iterables.png"><img src="/assets/iterables.png" alt=""></a></p>
+<p><a href="/assets/iterables.png"><img src="/assets/iterables.png" alt="" /></a></p>
 
 <p>Using NSoT as a backend, the above drawing visualizes various network
 automation services, within a service provider. <em>Service A</em> requires the
@@ -197,20 +194,19 @@ network automation system to keep track of a cryptomap sequence
 number, tenant VRF number and a portchannel interface
 number. Alternatively <em>Service B</em> requires the automation system to
 track the cryptomap sequence number and the tenant vrf number.
-Each time we invoke the &quot;playbook&quot; for service A, we can now make API
+Each time we invoke the “playbook” for service A, we can now make API
 calls to our NSoT backend, that will give us the next available unused
 integer for the given variable.
-This particular implementation, also gives you an unique <em>&quot;Service
-Key&quot;</em> each time you invoke the playbook. The idea behind it is; as a
+This particular implementation, also gives you an unique <em>“Service
+Key”</em> each time you invoke the playbook. The idea behind it is; as a
 service provider, you hand over the unique key to your customer as a
 reference to the service request. If the customer wants the service
 revoked or modified (pretty much any CRUD operation)  at a later date,
 the service key can be used to identify all the values associated with
 a particular service, and thus modified.</p>
 
-<h2>Demo Playbook:</h2>
-
-<p>If you&#39;d like to play around with the implementation, you can download
+<h2 id="demo-playbook">Demo Playbook:</h2>
+<p>If you’d like to play around with the implementation, you can download
 a copy <a href="https://github.com/termlen0/nsot">here</a>. Please keep in mind
 that you will have to follow
 the
@@ -222,11 +218,11 @@ the <a href="https://github.com/termlen0/nsot-tester">iterable test playbook</a>
 to get an idea of how to use the stateful backend for your automation
 playbooks.</p>
 
-<p><em>Twitter:</em> <a href="https://twitter.com/intent/tweet?url=http://localhost:4000/2016/12/28/observations/&text=The need for a stateful variable tracker and an implementation example&via=termlen0" 
-   target="_blank"> Share it with your followers</a> 
+<p><em>Twitter:</em> <a href="https://twitter.com/intent/tweet?url=http://localhost:4000/2016/12/28/observations/&amp;text=The need for a stateful variable tracker and an implementation example&amp;via=termlen0" target="_blank"> Share it with your followers</a> 
 or 
 <a href="https://twitter.com/termlen0">
   Follow me on Twitter</a>!</p>
+
 
 </div>
 <a href="https://twitter.com/share" class="twitter-share-button"
@@ -236,6 +232,15 @@ data-via="termlen0">Tweet</a>
 <div class="related">
   <h2>Related Posts</h2>
   <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/2019/11/16/observations/">
+            Ansible Custom Inventory Plugin - a quick start
+            <small>16 Nov 2019</small>
+          </a>
+        </h3>
+      </li>
     
       <li>
         <h3>
@@ -251,15 +256,6 @@ data-via="termlen0">Tweet</a>
           <a href="/2018/07/30/observations/">
             Using Ansible network-engine to simplify network automation tasks
             <small>30 Jul 2018</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
-          <a href="/2018/07/15/observations/">
-            Part2 of a 2 part blog on using the Ansible network-engine's command parser
-            <small>15 Jul 2018</small>
           </a>
         </h3>
       </li>

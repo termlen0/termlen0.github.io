@@ -1,0 +1,17 @@
+I"U<p>In it’s most basic form, TDD works as follows:</p>
+
+<pre><code>1. Envision the outcome of what you are developing [ Adding a VLAN
+   to a switch ]
+2. Write a test to validate that outcome [ Is the desired VLAN on
+   the switch ]
+3. Run the playbook, to invoke the test [ it will fail - RED test
+   ]
+4. Refactor your code [ write the roles/tasks needed for the tests
+   to pass ]
+5. Re-run tests [role] to ensure that they now pass
+</code></pre>
+
+<p>In this post, I hope to share my observations on how I used ansible to
+implement this using roles. I start with known facts/assumptions:</p>
+
+:ET

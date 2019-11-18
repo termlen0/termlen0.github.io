@@ -1,0 +1,12 @@
+I"=<p>In <a href="https://termlen0.github.io/2018/06/26/observations/">Part 1</a> of this 2 part series, I illustrated how to invoke the <code>command_parser</code> module using the <code>network-engine</code> role from Ansible. I then used it to illustrate how to build a simple parser, leveraging regex to convert unstructured device command output to structured data.</p>
+
+<p>In this post, I’ll build on it, highlighting the command parser options that makes wrangling <em>any</em> complex device output into structured output. In particular this post will deep-dive into the following directives:</p>
+
+<ul>
+  <li><code>pattern_group</code></li>
+  <li><code>extend</code></li>
+</ul>
+
+<p><strong>The playbook and complete parser is available in <a href="https://github.com/termlen0/parser_demo">this git repo.</a></strong></p>
+
+:ET

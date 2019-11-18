@@ -1,0 +1,42 @@
+I"�<h2 id="blog-posts">Blog Posts</h2>
+
+<ul>
+  <li>
+    <p>16 Nov 2019 » <a href="/2019/11/16/observations/"> Ansible Custom Inventory Plugin - a quick start </a></p>
+  </li>
+  <li>
+    <p>08 Jun 2019 » <a href="/2019/06/08/observations/"> Custom credentials in Ansible Tower to store Github private keys </a></p>
+  </li>
+  <li>
+    <p>30 Jul 2018 » <a href="/2018/07/30/observations/"> Using Ansible network-engine to simplify network automation tasks </a></p>
+  </li>
+  <li>
+    <p>15 Jul 2018 » <a href="/2018/07/15/observations/"> Part2 of a 2 part blog on using the Ansible network-engine’s command parser </a></p>
+  </li>
+  <li>
+    <p>26 Jun 2018 » <a href="/2018/06/26/observations/"> Part1 of a 2 part blog on using the Ansible network-engine’s command parser </a></p>
+  </li>
+  <li>
+    <p>19 Mar 2018 » <a href="/2018/03/19/observations/"> Please reverse mentor your managers </a></p>
+  </li>
+  <li>
+    <p>15 Jul 2017 » <a href="/2017/07/15/observations/"> NETCONF Ain’t YANG </a></p>
+  </li>
+  <li>
+    <p>20 Apr 2017 » <a href="/2017/04/20/observations/"> OT - A quick post on using gpg to manage github in Linux </a></p>
+  </li>
+  <li>
+    <p>12 Apr 2017 » <a href="/2017/04/12/observations/"> Test Driven Development (TDD) for networks,  using Ansible </a></p>
+  </li>
+  <li>
+    <p>03 Feb 2017 » <a href="/2017/02/03/observations/"> Of state, idempotency, and CI/CD in the brownfield network </a></p>
+  </li>
+  <li>
+    <p>28 Dec 2016 » <a href="/2016/12/28/observations/"> The need for a stateful variable tracker and an implementation example </a></p>
+  </li>
+  <li>
+    <p>16 Dec 2016 » <a href="/2016/12/16/observations/"> Running ansible at scale </a></p>
+  </li>
+</ul>
+
+:ET

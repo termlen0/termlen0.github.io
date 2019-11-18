@@ -1,5 +1,5 @@
 # Dependencies
-markdown:         redcarpet
+markdown:         kramdown
 highlighter:      pygments
 
 # Permalinks
@@ -24,9 +24,12 @@ excerpt_separator: "<!--more-->"
 gems:
   - jekyll-paginate
   - redcarpet
+  - kramdown
   - jekyll-gist
   - pygments.rb
 
+plugins:
+  - jekyll-paginate
 #Archive
 pages_list:
   Archive: '/archive'
