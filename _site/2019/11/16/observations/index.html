@@ -528,12 +528,13 @@ u'my_csv_plugin'
 (ansible) ~/P/m/inventory_plugin »                           
 </code></pre>
 
-<p>Everything appears neatly grouped correctly. Next we can add the variables like <code>ansible_network_os</code> and <code>ansible_host</code> for the hosts.</p>
-
 <p>Alternately, try the <code>--list</code> option</p>
 
 <pre><code class="language-bash">(ansible) ~/P/m/inventory_plugin » ansible-inventory -i csv_inventory.yaml --playbook-dir ./ --list
+
 </code></pre>
+
+<p>Everything appears neatly grouped correctly. Next we can add the variables like <code>ansible_network_os</code> and <code>ansible_host</code> for the hosts.</p>
 
 <h4 id="4-adding-the-host-variables">4. Adding the host variables</h4>
 

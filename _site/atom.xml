@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2019-11-18T11:49:11-05:00</updated>
+ <updated>2019-11-18T11:51:20-05:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -430,12 +430,13 @@ u'my_csv_plugin'
 (ansible) ~/P/m/inventory_plugin »                           
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;p&gt;Everything appears neatly grouped correctly. Next we can add the variables like &lt;code&gt;ansible_network_os&lt;/code&gt; and &lt;code&gt;ansible_host&lt;/code&gt; for the hosts.&lt;/p&gt;
-
 &lt;p&gt;Alternately, try the &lt;code&gt;--list&lt;/code&gt; option&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;(ansible) ~/P/m/inventory_plugin » ansible-inventory -i csv_inventory.yaml --playbook-dir ./ --list
+
 &lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Everything appears neatly grouped correctly. Next we can add the variables like &lt;code&gt;ansible_network_os&lt;/code&gt; and &lt;code&gt;ansible_host&lt;/code&gt; for the hosts.&lt;/p&gt;
 
 &lt;h4 id=&quot;4-adding-the-host-variables&quot;&gt;4. Adding the host variables&lt;/h4&gt;
 

@@ -416,13 +416,14 @@ You can now test this code by executing the `ansible-inventory` command as follo
 (ansible) ~/P/m/inventory_plugin »                           
 ```
 
-Everything appears neatly grouped correctly. Next we can add the variables like `ansible_network_os` and `ansible_host` for the hosts.
-
 Alternately, try the `--list` option
 
 ``` bash
 (ansible) ~/P/m/inventory_plugin » ansible-inventory -i csv_inventory.yaml --playbook-dir ./ --list
+
 ```
+
+Everything appears neatly grouped correctly. Next we can add the variables like `ansible_network_os` and `ansible_host` for the hosts.
 
 #### 4. Adding the host variables
 
