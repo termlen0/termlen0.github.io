@@ -282,7 +282,6 @@ Great! so we can see the options being sent into `_populate()`. Now we can remov
         self.inventory_file = self.inv_dir + '/' + self.inv_file
         self.myinventory = self._get_structured_inventory(self.inventory_file)
         #import pdb; pdb.set_trace()
-        return self.myinventory
 
 ```
 

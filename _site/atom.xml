@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2019-11-18T11:46:08-05:00</updated>
+ <updated>2019-11-18T11:49:11-05:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -295,7 +295,6 @@ u'my_csv_plugin'
         self.inventory_file = self.inv_dir + '/' + self.inv_file
         self.myinventory = self._get_structured_inventory(self.inventory_file)
         #import pdb; pdb.set_trace()
-        return self.myinventory
 
 &lt;/code&gt;&lt;/pre&gt;
 
