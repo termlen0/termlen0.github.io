@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Ansible Custom Inventory Plugin - a quick start
+title: Ansible Custom Inventory Plugin - a hands-on, quick start guide
 comments: true
 ---
 This post shows you how to write a custom inventory plugin for Ansible. As usual, this is not a deep dive. If you are interested about what inventory plugins are or why you might want to use them. Please see [the Ansible docs](https://docs.ansible.com/ansible/latest/plugins/inventory.html). Additionally for an in-depth understanding of inventories in general and inventory plugins in particular I highly recommend these videos:
