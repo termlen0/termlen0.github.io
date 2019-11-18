@@ -19,7 +19,7 @@ https://github.com/termlen0/custom-inventory-plugin/blob/master/csv_inventory/my
 We have devices from 2 datacenters in this spreadsheet. The file also describes the function the device performs and the platform type, that are of interest.
 
 ### Step 1: Write a simple Python program
-Our first step is simply to write a Python program that returns the data in the CSV as a JSON object. Why? Because inventory plugins are required to be written in Python and we will use this simple code as the stepping stone for building out the logic in the custom inventory plugin. Here's a link to the Python code that does this:
+Our first step is simply to write a Python program that returns the data in the CSV as a JSON object. Why? Because inventory plugins are required to be written in Python and we will use this simple code as the stepping stone for building out the logic in the custom inventory plugin. Here's a link to the Python code that does this: https://github.com/termlen0/custom-inventory-plugin/blob/master/csv2json.py
 
 
 Executing this locally as follows:

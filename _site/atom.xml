@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2019-11-18T11:17:05-05:00</updated>
+ <updated>2019-11-18T11:41:14-05:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -35,7 +35,7 @@ https://github.com/termlen0/custom-inventory-plugin/blob/master/csv_inventory/my
 &lt;p&gt;We have devices from 2 datacenters in this spreadsheet. The file also describes the function the device performs and the platform type, that are of interest.&lt;/p&gt;
 
 &lt;h3 id=&quot;step-1-write-a-simple-python-program&quot;&gt;Step 1: Write a simple Python program&lt;/h3&gt;
-&lt;p&gt;Our first step is simply to write a Python program that returns the data in the CSV as a JSON object. Why? Because inventory plugins are required to be written in Python and we will use this simple code as the stepping stone for building out the logic in the custom inventory plugin. Here’s a link to the Python code that does this:&lt;/p&gt;
+&lt;p&gt;Our first step is simply to write a Python program that returns the data in the CSV as a JSON object. Why? Because inventory plugins are required to be written in Python and we will use this simple code as the stepping stone for building out the logic in the custom inventory plugin. Here’s a link to the Python code that does this: https://github.com/termlen0/custom-inventory-plugin/blob/master/csv2json.py&lt;/p&gt;
 
 &lt;p&gt;Executing this locally as follows:&lt;/p&gt;
 
