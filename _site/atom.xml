@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2019-11-18T11:41:14-05:00</updated>
+ <updated>2019-11-18T11:46:08-05:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -261,8 +261,7 @@ job is to start building these.&lt;/p&gt;
 
 &lt;p&gt;Now let’s run the &lt;code&gt;ansible-inventory&lt;/code&gt; command to invoke the debugger and investigate the class object.&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;(ansible) ~/P/m/inventory_plugin » ansible-inventory -i csv_inventory.yaml --p
-laybook-dir ./ --list
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;(ansible) ~/P/m/inventory_plugin » ansible-inventory -i csv_inventory.yaml --playbook-dir ./ --list
 
 &lt;/code&gt;&lt;/pre&gt;
 

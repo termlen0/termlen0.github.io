@@ -246,8 +246,7 @@ Add the `_populate()` helper. As a learning step, let's simply populate it with 
 Now let's run the `ansible-inventory` command to invoke the debugger and investigate the class object.
 
 ``` bash
-(ansible) ~/P/m/inventory_plugin » ansible-inventory -i csv_inventory.yaml --p
-laybook-dir ./ --list
+(ansible) ~/P/m/inventory_plugin » ansible-inventory -i csv_inventory.yaml --playbook-dir ./ --list
 
 ```
 
