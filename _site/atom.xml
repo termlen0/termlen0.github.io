@@ -4,7 +4,7 @@
  <title>Network Automation</title>
  <link href="http://localhost:4000/atom.xml" rel="self"/>
  <link href="http://localhost:4000/"/>
- <updated>2019-11-18T11:13:40-05:00</updated>
+ <updated>2019-11-18T11:17:05-05:00</updated>
  <id>http://localhost:4000</id>
  <author>
    <name>Ajay Chenampara</name>
@@ -29,7 +29,7 @@
 
 &lt;h3 id=&quot;my-use-case&quot;&gt;My use case&lt;/h3&gt;
 
-&lt;p&gt;As always we’ll being with a use case :). I have my inventory in a spreadsheet, and I want to use that as the source of truth for my Ansible playbooks. &lt;img src=&quot;/assets/myinventory.png&quot; alt=&quot;&quot; /&gt;. Here’s a link to the CSV version of that spreadsheet: 
+&lt;p&gt;As always we’ll being with a use case :). I have my inventory in a spreadsheet, and I want to use that as the source of truth for my Ansible playbooks. &lt;img src=&quot;/assets/myinventory.png&quot; alt=&quot;&quot; /&gt; Here’s a link to the CSV version of that spreadsheet: 
 https://github.com/termlen0/custom-inventory-plugin/blob/master/csv_inventory/myinventory.csv&lt;/p&gt;
 
 &lt;p&gt;We have devices from 2 datacenters in this spreadsheet. The file also describes the function the device performs and the platform type, that are of interest.&lt;/p&gt;
@@ -70,8 +70,9 @@ https://github.com/termlen0/custom-inventory-plugin/blob/master/csv_inventory/my
   &lt;p&gt;This code is a ripoff from &lt;a href=&quot;https://medium.com/@hannah15198/convert-csv-to-json-with-python-b8899c722f6d&quot;&gt;my first google search hit&lt;/a&gt;&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;p&gt;We now have a nice structured object with all our inventory information that we can plug into the inventory plugin!
-&lt;strong&gt;NOTE: This could be data coming back from an external source of truth rather than the CSV file&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;We now have a nice structured object with all our inventory information that we can plug into the inventory plugin!&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;NOTE: This could be data coming back from an external source of truth rather than the CSV file&lt;/strong&gt;&lt;/p&gt;
 
 &lt;h3 id=&quot;step-2-writing-the-custom-inventory-file&quot;&gt;Step 2: Writing the custom inventory file.&lt;/h3&gt;
 

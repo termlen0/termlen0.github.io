@@ -13,7 +13,7 @@ Finally, this post describes *my* workflow while building custom inventory plugi
 
 ### My use case
 
-As always we'll being with a use case :). I have my inventory in a spreadsheet, and I want to use that as the source of truth for my Ansible playbooks. ![](/assets/myinventory.png). Here's a link to the CSV version of that spreadsheet: 
+As always we'll being with a use case :). I have my inventory in a spreadsheet, and I want to use that as the source of truth for my Ansible playbooks. ![](/assets/myinventory.png) Here's a link to the CSV version of that spreadsheet: 
 https://github.com/termlen0/custom-inventory-plugin/blob/master/csv_inventory/myinventory.csv
 
 We have devices from 2 datacenters in this spreadsheet. The file also describes the function the device performs and the platform type, that are of interest.
@@ -56,6 +56,7 @@ Results in the following output:
 > This code is a ripoff from [my first google search hit](https://medium.com/@hannah15198/convert-csv-to-json-with-python-b8899c722f6d)
 
 We now have a nice structured object with all our inventory information that we can plug into the inventory plugin!
+
 **NOTE: This could be data coming back from an external source of truth rather than the CSV file**
 
 ### Step 2: Writing the custom inventory file.
