@@ -17,7 +17,8 @@ for i in UnifiedJob.objects.filter():
      i.delete()
 ```
 
-*** STEPS:
+###STEPS:
+
  - In order to invoke this, first switch to a root user (that seems to work for me)
  - Invoke `shell_plus` by issuing the following command `awx-manage shell_plus`. This starts an interactive Python shell.
  - Copy and paste the Python code and wait for all the pending jobs to disappear!
