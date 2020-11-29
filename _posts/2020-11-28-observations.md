@@ -4,7 +4,7 @@ title: The idea of a "CareTaker" for git centeric network operations
 comments: true
 ---
 
-Many organizations have embraced or are beginning to embrace the
+Many organizations have embraced, or are beginning to embrace the
 configuration management of their network devices through code. A
 common pattern that I've come across consists of:
 
@@ -19,7 +19,7 @@ which then gets deployed onto the end points.
 But the idea of GitOps goes further than that – it uses tools to
 compare the actual production state of your endpoints with what's
 under source control and then it tells you when they don't match. This
-post introduces the idea of a "CareTaker" that ensures that detects
+post introduces the idea of a "CareTaker" that detects
 out-of-band (OOB) changes made to the network endpoints and alerts the
 operator to make a manual decision.
 
@@ -188,6 +188,12 @@ changes are made.
 
 ### Some additional notes
 
+#### Using collections with Ansible Tower
+
+If you are new to Ansible collections [this blog
+post](https://www.ansible.com/blog/installing-and-using-collections-on-ansible-tower)
+is a good place to understand how to use collections with Ansible Tower.
+
 #### What are approval nodes?
 
 [Bianca](https://www.ansible.com/blog/author/bianca-henderson) has a
@@ -218,6 +224,13 @@ DevOps. For this demo, each time human attention is needed (for the
 approval nodes), the workflow sends a slack team notification:
 
 ![Alt Text](/assets/caretaker_chatops.png )
+
+
+#### Demo repository
+
+The IaC repository used for this demo can be seen here:
+https://github.com/termlen0/nw-demo/tree/master/caretaker-deploy
+
 
 
 ### Conclusion
