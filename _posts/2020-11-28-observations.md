@@ -28,7 +28,9 @@ operator to make a manual decision.
 
 This blog post will present an implementation of such a "CareTaker"
 using an Ansible collection. A demo of this implementation is seen
-here: https://youtu.be/wiUFKtR91Rw
+here:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/wiUFKtR91Rw" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### Steady State Operations
 
