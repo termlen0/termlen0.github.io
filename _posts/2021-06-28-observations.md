@@ -4,7 +4,9 @@ title: Guest Blog: Dynamic Surveys Sort of....
 comments: true
 ---
 
-This post is guest blogged by [Eric](https://twitter.com/EricMcLeroy2), a good friend and fellow Red Hatter. For folks who may not know - *Eric currently holds 2 Masters Degrees in Network and Information Technology as well as an MBA from the University of Massachusetts Lowell. He also holds and has held various industry certifications from CCNP to Red Hat Architect. He has worked in many different fields throughout his career from Networking, Virtualization and Cloud. He has helped build the Network Automation Practice for Ansible within Red Hat and continues to grow as he is now working on all aspects of Ansible and ACM as well as moving toward Openshift Container Platform.*
+This post is guest blogged by [Eric](https://twitter.com/EricMcLeroy2), a good friend and fellow Red Hatter. For folks who may not know him:
+
+*Eric currently holds 2 Masters Degrees in Network and Information Technology as well as an MBA from the University of Massachusetts Lowell. He also holds and has held various industry certifications from CCNP to Red Hat Architect. He has worked in many different fields throughout his career from Networking, Virtualization and Cloud. He has helped build the Network Automation Practice for Ansible within Red Hat and continues to grow as he is now working on all aspects of Ansible and ACM as well as moving toward Openshift Container Platform.*
 
 In this blog post he addresses a question that he's been asked about by many organizations - the need for Dynamic Surveys in Ansible Tower. This feature would allow them to branch off on the fly as needed as well as populate items that have just been added. This blog will show you how to populate new items into surveys without having to do it by hand everytime the file changes. This could be do to for example a new OCP cluster being added or network interface being turned up and ready for use and populated in the troubleshooting field option of a lower Tier team members playbook access. Another example is if a new VMWare vCluster is added and it needs to be added as a choice for creating new vm's within.
 
