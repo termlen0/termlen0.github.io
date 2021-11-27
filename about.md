@@ -4,7 +4,7 @@ title: About
 ---
 <img src="../ajay_profile_mono.jpg" style="width:135px;height:160px;" >
 <p class="message">
-  Hey there! I'm Ajay Chenampara and I am a Senior Solution Architect at Red Hat. 
+  Hey there! I'm Ajay Chenampara and I am a Principal Solutions Architect at Red Hat. 
 </p>
 
 I have been doing network
